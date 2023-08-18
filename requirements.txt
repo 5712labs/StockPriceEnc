@@ -3,5 +3,4 @@ yfinance
 pandas
 datetime
 altair
-CmcScraper
 matplotlib
