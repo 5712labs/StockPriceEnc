@@ -2,5 +2,4 @@ openai
 yfinance
 pandas
 datetime
-relativedelta
 altair
