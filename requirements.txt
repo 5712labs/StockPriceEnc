@@ -5,5 +5,3 @@ datetime
 altair
 matplotlib
 seaborn
-plot_acf
-plot_pacf
