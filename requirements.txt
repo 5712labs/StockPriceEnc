@@ -4,7 +4,6 @@ pandas
 datetime
 altair
 matplotlib
-adfuller
 seaborn
 plot_acf
 plot_pacf
