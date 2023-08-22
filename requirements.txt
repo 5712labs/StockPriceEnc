@@ -3,3 +3,9 @@ yfinance
 pandas
 datetime
 altair
+matplotlib
+relativedelta
+adfuller
+seaborn
+plot_acf
+plot_pacf
