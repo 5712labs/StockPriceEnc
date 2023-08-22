@@ -3,8 +3,3 @@ yfinance
 pandas
 datetime
 altair
-matplotlib
-seaborn
-adfuller
-plot_acf
-plot_pacf
