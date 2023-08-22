@@ -29,7 +29,8 @@ st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 ### 사이드바 기간 설정 #########################################################
 # st.sidebar.header('Menu')
 
-dt_range = st.sidebar.radio('기간', ['1개월', '3개월', '6개월', '1년', '3년', '10년'])
+# dt_range = st.sidebar.radio('기간', ['1개월', '3개월', '6개월', '1년', '3년', '10년'])
+dt_range = st.sidebar.radio('기간', ['3개월', '6개월', '1년', '3년', '10년'])
 if dt_range == '1개월':
     start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=1))
 elif dt_range == '3개월':
@@ -407,5 +408,5 @@ labels2 = alt.Chart(text_data3).mark_text(
 )
 
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
-with st.expander("상세표 보기"):
-    st.write(text_data2)
+# with st.expander("상세표 보기"):
+#     st.write(text_data2)
