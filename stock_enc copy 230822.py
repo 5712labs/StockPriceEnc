@@ -7,18 +7,19 @@ from dateutil.relativedelta import relativedelta
 import altair as alt
 
 ### 페이지 기본 설정 ##########################################################
-# st.set_page_config(
-#     # page_icon="🤣",
-#     page_icon="👋",
-#     page_title="5712labs FLiveAnalytics",
-#     # initial_sidebar_state="auto", # expanded
-#     # layout="wide", "centered"
-#     # menu_items={
-#     # 'Get Help': 'https://www.extremelycoolapp.com/help',
-#     # 'Report a bug': "https://www.extremelycoolapp.com/bug",
-#     # 'About': "# This is a header. This is an *extremely* cool app!"
-#     # }
-# )
+st.set_page_config(
+    # page_icon="🤣",
+    page_icon="👋",
+    page_title="5712labs FLiveAnalytics",
+    # initial_sidebar_state="auto", # expanded
+    # layout="wide", "centered"
+    # menu_items={
+    # 'Get Help': 'https://www.extremelycoolapp.com/help',
+    # 'Report a bug': "https://www.extremelycoolapp.com/bug",
+    # 'About': "# This is a header. This is an *extremely* cool app!"
+    # }
+)
+
 
 # st.title('제목 쓰세요')
 # 페이지 헤더, 서브헤더 제목 설정
@@ -29,10 +30,9 @@ st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 ### 사이드바 기간 설정 #########################################################
 # st.sidebar.header('Menu')
 
-dt_range = st.sidebar.radio('기간', ['1개월', '3개월', '6개월', '1년', '3년', '10년'])
-if dt_range == '1개월':
-    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=1))
-elif dt_range == '3개월':
+dt_range = st.sidebar.radio('기간', ['3개월', '6개월', '1년', '3년', '10년'])
+
+if dt_range == '3개월':
     start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=3))
 elif dt_range == '6개월':    
     start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=6))
@@ -46,7 +46,13 @@ end_date = datetime.today()
 
 ### 사이드바 종목 설정 #########################################################
 stocks = [
-    {'name': ' 대우건설', 'symbol': '047040.KS'}
+    {'name': ' 대우건설', 'symbol': '047040.KS'},
+    # {'name': ' 코스피', 'symbol': '^KS11'},
+    # {'name': 'GS건설', 'symbol': '006360.KS'},
+    # {'name': '현대건설', 'symbol': '000720.KS'},
+    # {'name': 'DL이앤씨', 'symbol': '375500.KS'},
+    # {'name': '삼성엔지니어링', 'symbol': '028050.KS'},
+    # {'name': '금호건설', 'symbol': '002990.KS'},
     ]
 
 multi_stocks = st.sidebar.multiselect(
@@ -65,7 +71,7 @@ multi_stocks = st.sidebar.multiselect(
     [ #초기 선택
         # "인선이엔티 060150.KQ",
         # "코웨이 021240.KS",
-        # "삼성물산 028260.KS",
+        "삼성물산 028260.KS",
         "GS건설 006360.KS",
         "현대건설 000720.KS",
         "DL이앤씨 375500.KS"
@@ -124,6 +130,7 @@ def get_kor_amount_string_no_change(num_amount, ndigits_keep=3):
 
 change_df = pd.DataFrame() # 변동률
 rate_df = pd.DataFrame() # 변동률
+total_revenue_quarter_df = pd.DataFrame()
 
 info_df = pd.DataFrame(
     index=['시가총액', 
@@ -139,44 +146,44 @@ info_df = pd.DataFrame(
            '비고']
 )
 
+with st.spinner(text="페이지 로딩중..."):
+    for stock in stocks:
+        get_stock_data = yf.Ticker(stock['symbol'])
+        stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
+        # 일간변동률, 누적합계
+        stock_df['dpc'] = (stock_df.Close/stock_df.Close.shift(1)-1)*100
+        stock_df['cs'] = stock_df.dpc.cumsum()
+        
+        change2_df = pd.DataFrame(
+            {
+                'symbol': stock['name'],
+                'rate': stock_df.cs,
+             }
+        )
 
-# with st.spinner(text="주가정보를 불러오고 있습니다..."):
-progress_bar = st.progress(0)
-status_text = st.empty()
+        change2_df.reset_index(drop=False, inplace=True)
+        change_df = pd.concat([change_df, change2_df])
+        rate_df[stock['name']] = stock_df.cs
 
-for i, stock in enumerate(stocks):
-    l_rate = round(i / len(stocks) * 100)
-    progress_bar.progress(l_rate)
-    # status_text.text("%i%% Complete" % l_rate)
-    status_text.text("주가정보를 불러오는 중입니다. %i%%" % l_rate)
+        info_df[stock['name']] = [
+            get_stock_data.info['marketCap'], 
+            get_kor_amount_string_no_change(get_stock_data.info['marketCap']),
+            get_stock_data.info['recommendationKey'],
+            get_stock_data.info['currentPrice'],
+            # get_stock_data.info['totalCash'],
+            # get_stock_data.info['totalDebt'],
+            # get_stock_data.info['totalRevenue'],
+            # get_stock_data.info['grossProfits'],
+            # get_stock_data.info['operatingMargins'],
+            # get_stock_data.info['profitMargins'],
+            '']
 
-    get_stock_data = yf.Ticker(stock['symbol'])
-    stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
-    # 일간변동률, 누적합계
-    stock_df['dpc'] = (stock_df.Close/stock_df.Close.shift(1)-1)*100
-    stock_df['cs'] = stock_df.dpc.cumsum()
-    
-    change2_df = pd.DataFrame(
-        {
-            'symbol': stock['name'],
-            'rate': stock_df.cs,
-            }
-    )
+st.write(""" ### 🚀  누적변동률 """)
+# st.line_chart(change_df)
 
-    change2_df.reset_index(drop=False, inplace=True)
-    change_df = pd.concat([change_df, change2_df])
-    rate_df[stock['name']] = stock_df.cs
-
-    info_df[stock['name']] = [
-        get_stock_data.info['marketCap'], 
-        get_kor_amount_string_no_change(get_stock_data.info['marketCap']),
-        get_stock_data.info['recommendationKey'],
-        get_stock_data.info['currentPrice'],
-        '']
-
-status_text.text("")
-progress_bar.empty()
-st.write(f""" ### 🚀 {dt_range} 누적변동률  """)
+# st.write(change_df)
+# change_df.reset_index(drop=True, inplace=True)
+# st.write(change_df)
 
 line_chart = alt.Chart(change_df).mark_line().encode(
     x = alt.X('Date:T', title=''),
@@ -218,11 +225,11 @@ labels = alt.Chart(text_data3).mark_text(
 labels2 = alt.Chart(text_data3).mark_text(
     # point=True,
     fontWeight=600,
-    fontSize=14,
+    fontSize=13,
     # color='white',
     align='left',
     dx=15,
-    dy=8
+    dy=10
 ).encode(
     x = alt.X('Date:T', title=''),
     y = alt.Y('rate:Q', title='변동률'),
@@ -232,8 +239,9 @@ labels2 = alt.Chart(text_data3).mark_text(
 )
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 
+
 df2 = info_df.T
-st.write(f""" ### 🎙️ 시가총액 """)
+st.write(f""" ### 🚀  시가총액 """)
 # st.write(f""" #### (대우건설: {df2['시가총액변환'][0]} ) """)
 df2['종목명'] = df2.index
 bar_chart = alt.Chart(df2, title='').mark_bar().encode(
@@ -244,7 +252,7 @@ bar_chart = alt.Chart(df2, title='').mark_bar().encode(
 
 bar_text = alt.Chart(df2).mark_text(
     fontWeight=600,
-    fontSize=14,
+    fontSize=13,
     align='left',
     dx=10,
     dy=1
@@ -258,154 +266,7 @@ bar_text = alt.Chart(df2).mark_text(
                 text=alt.Text('시가총액변환:N')
             )
 st.altair_chart(bar_chart + bar_text, use_container_width=True)
-# st.write(df2)
- 
-# with st.expander("상세표 보기"):
-#     st.write(df2)
-#     st.table(df2)
 
-### 사이드바 종목 설정 #########################################################
-products = [
-    {'name': ' 원/달러', 'symbol': 'USDKRW=X'}
-    ]
-
-multi_products = st.sidebar.multiselect(
-    "지표를 선택하세요",
-    [
-        "크루드오일 CL=F",
-        "Gold GC=F",
-        "S&P500 ^GSPC",
-        "천연가스 LNG",
-        "10년물 ^TNX",
-        "DBC DBC",
-        "BTC-USD BTC-USD",
-        "달러인덱스 DX-Y.NYB"
-        ],
-    [ #초기 선택
-        "크루드오일 CL=F",
-        "Gold GC=F",
-        # "S&P500 ^GSPC",
-        "천연가스 LNG",
-        # "10년물 ^TNX",
-        "DBC DBC",
-        "BTC-USD BTC-USD",
-        "달러인덱스 DX-Y.NYB"
-        ]
-    )
-
-for product in multi_products:
-    words = product.split()
-    products.append({'name': words[0], 'symbol': words[1]})
-
-### 공통함수 ###############################################################
-change_df = pd.DataFrame() # 변동률
-last_df = pd.DataFrame() # 변동률
-
-# with st.spinner(text="각종 지표 불러오는중..."):
-# with st.spinner(text="각종 지표 불러오는중..."):    
-progress_bar = st.progress(0)
-status_text = st.empty()
-# for product in products:
-for idx, product in enumerate(products):
-
-    l_rate = round(i / len(products) * 100)
-    progress_bar.progress(l_rate)
-    # status_text.text("%i%% Complete" % l_rate)
-    status_text.text("지표정보를 불러오는 중입니다. %i%%" % l_rate)
-
-    get_product_data = yf.Ticker(product['symbol'])
-    product_df = get_product_data.history(period='1d', start=start_date, end=end_date)
-
-    # 일간변동률, 누적합계
-    product_df['dpc'] = (product_df.Close/product_df.Close.shift(1)-1)*100
-    product_df['cs'] = product_df.dpc.cumsum()
-
-    change2_df = pd.DataFrame(
-        {
-            'symbol': product['name'],
-            # 'date': product_df.index,
-            # 'idx': change2_df.index,
-            # 'date_type': product_df.index,
-            'Close': product_df.Close,
-            'rate': product_df.cs,
-            }
-    )
-    change2_df.reset_index(drop=False, inplace=True)
-    change_df = pd.concat([change_df, change2_df])
-
-    last2_df = pd.DataFrame(product_df.iloc[len(product_df.index)-1]).T
-    last3_df = pd.DataFrame(
-        {
-            'symbol': product['name'],
-            'Date': last2_df.index,
-            'Close': last2_df.Close, 
-            # 'idx': change2_df.index,
-            # 'date_type': product_df.index,
-            'rate': last2_df.cs,
-            }
-    )
-    # st.write(last3_df)
-    # last3_df.reset_index(drop=False, inplace=True)
-    last_df = pd.concat([last_df, last3_df])
-    # last3_df.reset_index(drop=False, inplace=True)
-    # last_df.reset_index(drop=False, inplace=True)
-
-status_text.text("")
-progress_bar.empty()
-st.write(f""" ### 📈 {dt_range} 지표변동률  """)
-
-line_chart = alt.Chart(change_df).mark_line().encode(
-    x = alt.X('Date:T', title=''),
-    y = alt.Y('rate:Q', title=''),
-    # color = alt.Color('symbol:N', title='종목', legend=None)
-    color = alt.Color('symbol:N', title='', legend=alt.Legend(
-        orient='bottom', #none
-        # legendX=130, legendY=0,
-        direction='horizontal',
-        titleAnchor='end'))
-)
-
-text_data = last_df
-text_data.reset_index(drop=True, inplace=True)
-text_data2 = text_data.sort_values(by=['rate'], ascending=True)
-text_data2.reset_index(drop=True, inplace=True)
-text_data3 = pd.DataFrame(text_data2.loc[0]).T
-if len(text_data2.index) > 1:
-    text_data3.loc[1] = text_data2.loc[len(text_data2.index)-1]
-if len(text_data2.index) > 2:
-    text_data3.loc[2] = text_data2.loc[round(len(text_data2.index)/2)]
-
-labels = alt.Chart(text_data3).mark_text(
-    # point=True,
-    fontWeight=600,
-    fontSize=14,
-    # color='white',
-    align='left',
-    dx=15,
-    dy=-8
-).encode(
-    x = alt.X('Date:T', title=''),
-    y = alt.Y('rate:Q', title='변동률'),
-    # y = 'rate:Q',
-    text=alt.Text('rate:Q', format='.1f'),
-    color = alt.Color('symbol:N', title='')
-)
-
-labels2 = alt.Chart(text_data3).mark_text(
-    # point=True,
-    fontWeight=600,
-    fontSize=13,
-    # color='white',
-    align='left',
-    dx=15,
-    dy=10
-).encode(
-    x = alt.X('Date:T', title=''),
-    y = alt.Y('rate:Q', title='변동률'),
-    text=alt.Text('symbol:N'),
-    color = alt.Color('symbol:N', title='')
-)
-
-st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 with st.expander("상세표 보기"):
-    st.write(text_data2)
+    st.write(df2)
+    st.table(df2)

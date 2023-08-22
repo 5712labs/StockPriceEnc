@@ -2,5 +2,9 @@ openai
 yfinance
 pandas
 datetime
-relativedelta
 altair
+matplotlib
+seaborn
+adfuller
+plot_acf
+plot_pacf

@@ -35,7 +35,7 @@ elif dt_range == '10년':
 end_date = datetime.today()
 
 ### 사이드바 종목 설정 #########################################################
-stocks = [
+products = [
     {'name': ' 원/달러', 'symbol': 'KRW=X'},
     # {'name': ' 애플', 'symbol': 'AAPL'},
     # {'name': ' 코스피', 'symbol': '^KS11'},
@@ -46,7 +46,7 @@ stocks = [
     # {'name': '금호건설', 'symbol': '002990.KS'},
     ]
 
-multi_stocks = st.sidebar.multiselect(
+multi_products = st.sidebar.multiselect(
     "동종사를 선택하세요",
     [
         "크루드오일 CL=F",
@@ -55,6 +55,7 @@ multi_stocks = st.sidebar.multiselect(
         "천연가스 LNG",
         "10년물 ^TNX",
         "DBC DBC",
+        "BTC-USD BTC-USD",
         "달러인덱스 DX-Y.NYB"
         ],
     [ #초기 선택
@@ -64,47 +65,48 @@ multi_stocks = st.sidebar.multiselect(
         "천연가스 LNG",
         # "10년물 ^TNX",
         "DBC DBC",
+        "BTC-USD BTC-USD",
         "달러인덱스 DX-Y.NYB"
         ]
     )
 
-for stock in multi_stocks:
-    words = stock.split()
-    stocks.append({'name': words[0], 'symbol': words[1]})
+for product in multi_products:
+    words = product.split()
+    products.append({'name': words[0], 'symbol': words[1]})
 
 ### 공통함수 ###############################################################
 change_df = pd.DataFrame() # 변동률
 last_df = pd.DataFrame() # 변동률
 
 with st.spinner(text="페이지 로딩중..."):
-    # for stock in stocks:
-    for idx, stock in enumerate(stocks):
-        get_stock_data = yf.Ticker(stock['symbol'])
-        stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
+    # for product in products:
+    for idx, product in enumerate(products):
+        get_product_data = yf.Ticker(product['symbol'])
+        product_df = get_product_data.history(period='1d', start=start_date, end=end_date)
 
         # 일간변동률, 누적합계
-        stock_df['dpc'] = (stock_df.Close/stock_df.Close.shift(1)-1)*100
-        stock_df['cs'] = stock_df.dpc.cumsum()
+        product_df['dpc'] = (product_df.Close/product_df.Close.shift(1)-1)*100
+        product_df['cs'] = product_df.dpc.cumsum()
 
         change2_df = pd.DataFrame(
             {
-                'symbol': stock['name'],
-                # 'date': stock_df.index,
+                'symbol': product['name'],
+                # 'date': product_df.index,
                 # 'idx': change2_df.index,
-                # 'date_type': stock_df.index,
-                'rate': stock_df.cs,
+                # 'date_type': product_df.index,
+                'rate': product_df.cs,
              }
         )
         change2_df.reset_index(drop=False, inplace=True)
         change_df = pd.concat([change_df, change2_df])
 
-        last2_df = pd.DataFrame(stock_df.iloc[len(stock_df.index)-1]).T
+        last2_df = pd.DataFrame(product_df.iloc[len(product_df.index)-1]).T
         last3_df = pd.DataFrame(
             {
-                'symbol': stock['name'],
+                'symbol': product['name'],
                 'Date': last2_df.index,
                 # 'idx': change2_df.index,
-                # 'date_type': stock_df.index,
+                # 'date_type': product_df.index,
                 'rate': last2_df.cs,
              }
         )
@@ -171,5 +173,5 @@ labels2 = alt.Chart(text_data3).mark_text(
 )
 
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
-with st.expander("상세표 보기"):
-    st.table(text_data2)
+# with st.expander("상세표 보기"):
+#     st.table(text_data2)
