@@ -240,6 +240,7 @@ with st.expander("상세표 보기"):
     st.table(text_data) # 변동률
 
 st.write(""" ### 🎙️ AI 동종사 비교 """)
+openai.api_key = st.secrets["api_key"]
 # DataFrame 결과를 ChatCompletion messages에 넣기 위한 변환
 messages = [{'role': 'system', 'content': '넌 대우건설 재무 분석가야'},
             {'role': 'assistant', 'content': '비교 분석해줘'}]
@@ -256,6 +257,9 @@ for index, row in df2.iterrows():
 user_message = {'role': 'user', 'content': f"{userq}"}
 messages.extend([user_message])
 
+
+
+
 userq = '|회사명|변동률|' + '\n'
 # DataFrame의 각 행을 ChatCompletion messages에 추가
 for index, row in text_data.iterrows():
@@ -266,20 +270,37 @@ for index, row in text_data.iterrows():
 user_message = {'role': 'user', 'content': f"{userq}"}
 messages.extend([user_message])
 
+with st.expander("상세표 보기"):
+    st.write(messages)
+
+streamText = '🤖'
+status_text = st.empty()
+
+status_text = st.empty()
+
 with st.spinner('Waiting for ChatGPT...'):
     get_respense = openai.ChatCompletion.create(
         model = "gpt-3.5-turbo",
         messages = messages,
-        # stream=True,   
+        temperature=0,
+        stream=True,   
     )
-    prompt = get_respense["choices"][0]["message"]["content"]
-    # print(prompt)
+    
+    for respense in get_respense:
+        # prompt = respense["choices"][0]["message"]["content"]
+        prompt = respense["choices"][0].get("delta", {}).get("content")
+        if prompt is not None:
+            streamText = streamText + prompt
+            status_text.text(streamText)
+            # streamText = streamText + prompt
+            print(prompt, end='') # 한줄씩 츨략
+            # print(prompt, end='') # 한줄씩 츨략
 
-st.success(f""" {prompt} """)
+# st.success(f""" {prompt} """)
 # st.write(f""" {prompt} """)
 
-with st.expander("상세표 보기"):
-    st.write(messages)
+# with st.expander("상세표 보기"):
+#     st.write(messages)
 
 ### 사이드바 종목 설정 #########################################################
 products = [
@@ -431,9 +452,3 @@ with st.expander("상세표 보기"):
     st.write(change_df)
     st.table(change_df)
     
-
-
-
-
-
-
