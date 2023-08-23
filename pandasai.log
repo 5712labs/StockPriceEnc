@@ -1,0 +1,137 @@
+2023-08-23 10:34:12 [INFO] Question: Which are the 5 happiest countries?
+2023-08-23 10:34:12 [INFO] Running PandasAI with openai LLM...
+2023-08-23 10:34:12 [INFO] Prompt ID: 385d2265-8ad1-4e05-813a-3fe19466e6df
+2023-08-23 10:34:13 [INFO] Question: GDP를 높은 순으로 3등급으로 나눠주고, 각 등급의 평균 GDP를 Bar 그래프로 그려줘
+2023-08-23 10:34:13 [INFO] Running PandasAI with openai LLM...
+2023-08-23 10:34:13 [INFO] Prompt ID: 033bc1e3-9f17-4b48-8940-7a38ebb59ab3
+2023-08-23 10:34:39 [INFO] 
+                    Code generated:
+                    ```
+                    # TODO import all the dependencies required
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Analyze the data
+# 1. Prepare: Preprocessing and cleaning data if necessary
+# 2. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
+# 3. Analyze: Conducting the actual analysis (if the user asks to create a chart save it to an image in exports/charts/temp_chart.png and do not show the chart.)
+# 4. Output: return a dictionary of:
+# - type (possible values "text", "number", "dataframe", "plot")
+# - value (can be a string, a dataframe or the path of the plot, NOT a dictionary)
+# Example output: { "type": "text", "value": "The average loan amount is $15,000." }
+def analyze_data(dfs: list[pd.DataFrame]) -> dict:
+    # Combine all dataframes into one
+    df = pd.concat(dfs)
+
+    # Sort the dataframe by GDP in descending order
+    df_sorted = df.sort_values(by='gdp', ascending=False)
+
+    # Divide the countries into 3 groups based on GDP
+    num_groups = 3
+    df_sorted['group'] = pd.qcut(df_sorted['gdp'], q=num_groups, labels=False)
+
+    # Calculate the average GDP for each group
+    avg_gdp = df_sorted.groupby('group')['gdp'].mean()
+
+    # Create a bar plot of the average GDP for each group
+    plt.bar(avg_gdp.index, avg_gdp.values)
+    plt.xlabel('Group')
+    plt.ylabel('Average GDP')
+    plt.title('Average GDP by Group')
+    plt.savefig('exports/charts/temp_chart.png')
+    plt.close()
+
+    # Return the path of the plot
+    return {"type": "plot", "value": "exports/charts/temp_chart.png"}
+
+# Declare a result variable
+result = analyze_data(dfs)
+                    ```
+                
+2023-08-23 10:34:39 [INFO] 
+Code running:
+```
+def analyze_data(dfs: list[pd.DataFrame]) ->dict:
+    df = pd.concat(dfs)
+    df_sorted = df.sort_values(by='gdp', ascending=False)
+    num_groups = 3
+    df_sorted['group'] = pd.qcut(df_sorted['gdp'], q=num_groups, labels=False)
+    avg_gdp = df_sorted.groupby('group')['gdp'].mean()
+    plt.bar(avg_gdp.index, avg_gdp.values)
+    plt.xlabel('Group')
+    plt.ylabel('Average GDP')
+    plt.title('Average GDP by Group')
+    plt.savefig('exports/charts/temp_chart.png')
+    plt.close()
+    return {'type': 'plot', 'value': 'exports/charts/temp_chart.png'}
+
+
+result = analyze_data(dfs)
+        ```
+2023-08-23 10:34:40 [INFO] Answer: {'type': 'plot', 'value': 'exports/charts/temp_chart.png'}
+2023-08-23 10:34:40 [INFO] Executed in: 26.483646869659424s
+2023-08-23 10:36:24 [INFO] Question: Which are the 5 happiest countries?
+2023-08-23 10:36:24 [INFO] Running PandasAI with openai LLM...
+2023-08-23 10:36:24 [INFO] Prompt ID: fcc9da7b-a9ea-45a8-9f4b-1b8340dbcf44
+2023-08-23 10:37:41 [INFO] 
+                    Code generated:
+                    ```
+                    # TODO import all the dependencies required
+import pandas as pd
+
+# Analyze the data
+# 1. Prepare: Preprocessing and cleaning data if necessary
+# 2. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
+# 3. Analyze: Conducting the actual analysis (if the user asks to create a chart save it to an image in exports/charts/temp_chart.png and do not show the chart.)
+# 4. Output: return a dictionary of:
+# - type (possible values "text", "number", "dataframe", "plot")
+# - value (can be a string, a dataframe or the path of the plot, NOT a dictionary)
+# Example output: { "type": "text", "value": "The average loan amount is $15,000." }
+def analyze_data(dfs: list[pd.DataFrame]) -> dict:
+    # Code goes here (do not add comments)
+    # 2. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
+    # Filter the dataframe to include only the columns 'country' and 'happiness_index'
+    df = dfs[0][['country', 'happiness_index']]
+    
+    # Sort the dataframe by 'happiness_index' in descending order
+    df_sorted = df.sort_values(by='happiness_index', ascending=False)
+    
+    # Select the top 5 happiest countries
+    top_5_happiest_countries = df_sorted.head(5)
+    
+    # 4. Output: return a dictionary of:
+    # - type (possible values "text", "number", "dataframe", "plot")
+    # - value (can be a string, a dataframe or the path of the plot, NOT a dictionary)
+    return {"type": "dataframe", "value": top_5_happiest_countries}
+
+# Declare a result variable
+result = analyze_data(dfs)
+                    ```
+                
+2023-08-23 10:37:41 [INFO] 
+Code running:
+```
+def analyze_data(dfs: list[pd.DataFrame]) ->dict:
+    df = dfs[0][['country', 'happiness_index']]
+    df_sorted = df.sort_values(by='happiness_index', ascending=False)
+    top_5_happiest_countries = df_sorted.head(5)
+    return {'type': 'dataframe', 'value': top_5_happiest_countries}
+
+
+result = analyze_data(dfs)
+        ```
+2023-08-23 10:37:41 [INFO] Answer: {'type': 'dataframe', 'value':           country  happiness_index
+0   United States              7.3
+6          Canada              7.3
+7       Australia              7.3
+1  United Kingdom              7.2
+3         Germany              7.0}
+2023-08-23 10:37:41 [INFO] Executed in: 77.04079985618591s
+2023-08-23 10:40:02 [INFO] error_code=None error_message="[[1832551579648, '1조8천3백억원', 'buy', 4460.0, '', ' 대우건설'], [1204573437952, '1조2천억원', 'hold', 14190.0, '', 'GS건설'], [3847349862400, '3조8천5백억원', 'buy', 34550.0, '', '현대건설'], [1215940132864, '1조2천2백억원', 'buy', 30050.0, '', 'DL이앤씨']] is not of type 'string' - 'messages.1.content'" error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 10:43:15 [INFO] error_code=None error_message="[[1832551579648, '1조8천3백억원', 'buy', 4460.0, '', ' 대우건설'], [1203724484608, '1조2천억원', 'hold', 14180.0, '', 'GS건설'], [3852917538816, '3조8천5백억원', 'buy', 34600.0, '', '현대건설'], [1217963360256, '1조2천2백억원', 'buy', 30100.0, '', 'DL이앤씨']] is not of type 'string' - 'messages.1.content'" error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 10:45:14 [INFO] error_code=None error_message='[{\'role\': \'system\', \'content\': \'You are a user\'}, {\'role\': \'assistant\', \'content\': \'Hello! I can help you with your DataFrame results.\'}, {\'role\': \'user\', \'content\': "Tell me about Alice\'s age."}, {\'role\': \'assistant\', \'content\': \'Alice is 25 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Bob\'s age."}, {\'role\': \'assistant\', \'content\': \'Bob is 30 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Charlie\'s age."}, {\'role\': \'assistant\', \'content\': \'Charlie is 22 years old.\'}] is not of type \'string\' - \'messages.1.content\'' error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 10:45:56 [INFO] error_code=None error_message='[{\'role\': \'system\', \'content\': \'You are a user\'}, {\'role\': \'assistant\', \'content\': \'Hello! I can help you with your DataFrame results.\'}, {\'role\': \'user\', \'content\': "Tell me about Alice\'s age."}, {\'role\': \'assistant\', \'content\': \'Alice is 25 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Bob\'s age."}, {\'role\': \'assistant\', \'content\': \'Bob is 30 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Charlie\'s age."}, {\'role\': \'assistant\', \'content\': \'Charlie is 22 years old.\'}] is not of type \'string\' - \'messages.1.content\'' error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 10:49:50 [INFO] error_code=None error_message='[{\'role\': \'system\', \'content\': \'You are a user\'}, {\'role\': \'assistant\', \'content\': \'Hello! I can help you with your DataFrame results.\'}, {\'role\': \'user\', \'content\': "Tell me about Alice\'s age."}, {\'role\': \'assistant\', \'content\': \'Alice is 25 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Bob\'s age."}, {\'role\': \'assistant\', \'content\': \'Bob is 30 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Charlie\'s age."}, {\'role\': \'assistant\', \'content\': \'Charlie is 22 years old.\'}] is not of type \'string\' - \'messages.1.content\'' error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 10:50:35 [INFO] error_code=rate_limit_exceeded error_message='Rate limit reached for default-gpt-3.5-turbo in organization org-zagT7a6Q0Hq7RDC2x9grvwJL on requests per min. Limit: 3 / min. Please try again in 20s. Contact us through our help center at help.openai.com if you continue to have issues. Please add a payment method to your account to increase your rate limit. Visit https://platform.openai.com/account/billing to add a payment method.' error_param=None error_type=requests message='OpenAI API error received' stream_error=False
+2023-08-23 10:54:36 [INFO] error_code=None error_message='[{\'role\': \'system\', \'content\': \'You are a user\'}, {\'role\': \'assistant\', \'content\': \'Hello! I can help you with your DataFrame results.\'}, {\'role\': \'user\', \'content\': "Tell me about Alice\'s age."}, {\'role\': \'assistant\', \'content\': \'Alice is 25 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Bob\'s age."}, {\'role\': \'assistant\', \'content\': \'Bob is 30 years old.\'}, {\'role\': \'user\', \'content\': "Tell me about Charlie\'s age."}, {\'role\': \'assistant\', \'content\': \'Charlie is 22 years old.\'}] is not of type \'string\' - \'messages.1.content\'' error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
+2023-08-23 11:09:46 [INFO] error_code=None error_message="'시가총액      1828442734592\\n시가총액변환         1조8천3백억원\\n매수의견                buy\\n현재가              4450.0\\n비고                     \\n종목명                대우건설시가총액      1190142279680\\n시가총액변환          1조천9백억원\\n매수의견               hold\\n현재가             14020.0\\n비고                     \\n종목명                GS건설시가총액      3830646308864\\n시가총액변환         3조8천3백억원\\n매수의견                buy\\n현재가             34400.0\\n비고                     \\n종목명                현대건설시가총액      1213917036544\\n시가총액변환          1조2천백억원\\n매수의견                buy\\n현재가             30000.0\\n비고                     \\n종목명               DL이앤씨' is not of type 'array' - 'messages'" error_param=None error_type=invalid_request_error message='OpenAI API error received' stream_error=False
