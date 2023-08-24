@@ -3,11 +3,33 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+# import time
 import altair as alt
-import openai
 
+### 페이지 기본 설정 ##########################################################
+# st.set_page_config(
+#     # page_icon="🤣",
+#     page_icon="👋",
+#     page_title="5712labs FLiveAnalytics",
+#     # initial_sidebar_state="auto", # expanded
+#     # layout="wide", "centered"
+#     # menu_items={
+#     # 'Get Help': 'https://www.extremelycoolapp.com/help',
+#     # 'Report a bug': "https://www.extremelycoolapp.com/bug",
+#     # 'About': "# This is a header. This is an *extremely* cool app!"
+#     # }
+# )
+
+# st.title('제목 쓰세요')
+# 페이지 헤더, 서브헤더 제목 설정
 st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
+# st.subheader("스트림릿 기능 맛보기")
 
+# st.sidebar.success("메뉴")
+### 사이드바 기간 설정 #########################################################
+# st.sidebar.header('Menu')
+
+# dt_range = st.sidebar.radio('기간', ['1개월', '3개월', '6개월', '1년', '3년', '10년'])
 dt_range = st.sidebar.radio('기간', ['3개월', '6개월', '1년', '3년', '10년'])
 if dt_range == '1개월':
     start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=1))
@@ -118,6 +140,8 @@ info_df = pd.DataFrame(
            '비고']
 )
 
+
+# with st.spinner(text="주가정보를 불러오고 있습니다..."):
 progress_bar = st.progress(0)
 status_text = st.empty()
 
@@ -210,7 +234,7 @@ labels2 = alt.Chart(text_data3).mark_text(
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 
 df2 = info_df.T
-st.write(""" ### 🎙️ 시가총액 """)
+st.write(f""" ### 🎙️ 시가총액 """)
 # st.write(f""" #### (대우건설: {df2['시가총액변환'][0]} ) """)
 df2['종목명'] = df2.index
 bar_chart = alt.Chart(df2, title='').mark_bar().encode(
@@ -235,72 +259,11 @@ bar_text = alt.Chart(df2).mark_text(
                 text=alt.Text('시가총액변환:N')
             )
 st.altair_chart(bar_chart + bar_text, use_container_width=True)
-with st.expander("상세표 보기"):
-    st.table(df2) # 시가총액, 현재가
-    st.table(text_data) # 변동률
-
-st.write(""" ### 🎙️ AI 동종사 비교 """)
-openai.api_key = st.secrets["api_key"]
-# DataFrame 결과를 ChatCompletion messages에 넣기 위한 변환
-messages = [{'role': 'system', 'content': '넌 대우건설 재무 분석가야'},
-            {'role': 'assistant', 'content': '비교 분석해줘'}]
-
-userq = '|회사명|시가총액|매수의견|현재가|' + '\n'
-# DataFrame의 각 행을 ChatCompletion messages에 추가
-for index, row in df2.iterrows():
-    # if index == ' 대우건설':
-    #     st.write(row)
-    userq = userq + '|' + index + '|' + row['시가총액변환'] + '|' + row['매수의견'] + '|'
-    userq = userq + str(round(row['현재가'])) + '|' + '\n'
-# st.write(userq)
-# print(userq)
-user_message = {'role': 'user', 'content': f"{userq}"}
-messages.extend([user_message])
-
-
-
-
-userq = '|회사명|변동률|' + '\n'
-# DataFrame의 각 행을 ChatCompletion messages에 추가
-for index, row in text_data.iterrows():
-    rate = round(row['rate'], 2)
-    userq = userq +  '|' + row['symbol'] + '|' + f"{rate}" + '|' + '\n'
-# st.write(userq)
-# print(userq)
-user_message = {'role': 'user', 'content': f"{userq}"}
-messages.extend([user_message])
-
-with st.expander("상세표 보기"):
-    st.write(messages)
-
-streamText = '🤖'
-status_text = st.empty()
-
-status_text = st.empty()
-
-with st.spinner('Waiting for ChatGPT...'):
-    get_respense = openai.ChatCompletion.create(
-        model = "gpt-3.5-turbo",
-        messages = messages,
-        temperature=0,
-        stream=True,   
-    )
-    
-    for respense in get_respense:
-        # prompt = respense["choices"][0]["message"]["content"]
-        prompt = respense["choices"][0].get("delta", {}).get("content")
-        if prompt is not None:
-            streamText = streamText + prompt
-            status_text.text(streamText)
-            # streamText = streamText + prompt
-            print(prompt, end='') # 한줄씩 츨략
-            # print(prompt, end='') # 한줄씩 츨략
-
-# st.success(f""" {prompt} """)
-# st.write(f""" {prompt} """)
-
+# st.write(df2)
+ 
 # with st.expander("상세표 보기"):
-#     st.write(messages)
+#     st.write(df2)
+#     st.table(df2)
 
 ### 사이드바 종목 설정 #########################################################
 products = [
@@ -322,9 +285,9 @@ multi_products = st.sidebar.multiselect(
     [ #초기 선택
         "크루드오일 CL=F",
         "Gold GC=F",
-        "S&P500 ^GSPC",
+        # "S&P500 ^GSPC",
         "천연가스 LNG",
-        "10년물 ^TNX",
+        # "10년물 ^TNX",
         "DBC DBC",
         "BTC-USD BTC-USD",
         "달러인덱스 DX-Y.NYB"
@@ -445,10 +408,5 @@ labels2 = alt.Chart(text_data3).mark_text(
 )
 
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
-with st.expander("상세표 보기"):
-    st.write(text_data2)
-    st.write(last_df)
-    st.table(last_df)
-    st.write(change_df)
-    st.table(change_df)
-    
+# with st.expander("상세표 보기"):
+#     st.write(text_data2)

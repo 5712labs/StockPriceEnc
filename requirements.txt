@@ -5,3 +5,5 @@ datetime
 altair
 matplotlib
 seaborn
+streamlit-chat
+statsmodels

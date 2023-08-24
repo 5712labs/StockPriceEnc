@@ -42,7 +42,6 @@ if submit and user_input:
 
   st.image(dalle_response["data"][0]["url"])
 
-
 # 예시로 사용할 DataFrame 생성
 data = {'Name': ['Alice', 'Bob', 'Charlie'],
         'Age': [25, 30, 22]}
