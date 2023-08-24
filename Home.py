@@ -121,6 +121,10 @@ info_df = pd.DataFrame(
            '비고']
 )
 
+st.write(""" ### 🤖 AI 브리핑 """)
+ai_stock_text = st.empty()
+ai_eco_text = st.empty()
+
 progress_bar = st.progress(0)
 status_text = st.empty()
 
@@ -248,7 +252,6 @@ st.altair_chart(bar_chart + bar_text, use_container_width=True)
 ### AI 동종사 비교 ##########################################################
 ##########################################################################
 
-st.write(""" ### 🤖 AI 브리핑 """)
 openai.api_key = st.secrets["api_key"]
 # DataFrame 결과를 ChatCompletion messages에 넣기 위한 변환
 messages = [{'role': 'system', 'content': '넌 대우건설 재무 분석가야'},
@@ -277,7 +280,7 @@ user_message = {'role': 'user', 'content': f"{userq}"}
 messages.extend([user_message])
 
 streamText = '🤖 '
-status_text = st.empty()
+# ai_stock_text = st.empty()
 
 with st.expander("프롬프트 보기"):
     st.write(messages)
@@ -297,7 +300,7 @@ for respense in get_respense:
     prompt = respense["choices"][0].get("delta", {}).get("content")
     if prompt is not None:
         streamText = streamText + prompt
-        status_text.success(f""" {streamText} """)
+        ai_stock_text.success(f""" {streamText} """)       
         # print(prompt, end='') # 한줄씩 츨략
         # print(prompt, end='') # 한줄씩 츨략
 
@@ -455,7 +458,7 @@ st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 ### AI 경제지표 브리핑 #######################################################
 ##########################################################################
 
-st.write(""" ### 🤖 AI 경제지표 브리핑 """)
+# st.write(""" ### 🤖 AI 경제지표 브리핑 """)
 # openai.api_key = st.secrets["api_key"]
 # DataFrame 결과를 ChatCompletion messages에 넣기 위한 변환
 messages = [{'role': 'system', 'content': '넌 재무 분석가야'},
@@ -473,7 +476,7 @@ user_message = {'role': 'user', 'content': f"{userq}"}
 messages.extend([user_message])
 
 streamText = '🤖 '
-status_text = st.empty()
+# ai_eco_text = st.empty()
 
 with st.expander("프롬프트 보기"):
     st.write(messages)
@@ -492,6 +495,6 @@ for respense in get_respense:
     prompt = respense["choices"][0].get("delta", {}).get("content")
     if prompt is not None:
         streamText = streamText + prompt
-        status_text.success(f""" {streamText} """)
+        ai_eco_text.info(f""" {streamText} """)
         # print(prompt, end='') # 한줄씩 츨략
         # print(prompt, end='') # 한줄씩 츨략

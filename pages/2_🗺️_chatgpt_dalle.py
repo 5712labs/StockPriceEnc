@@ -4,8 +4,6 @@ import pandas as pd
 
 openai.api_key = st.secrets["api_key"]
 
-st.title('Hello 5712labs')
-
 with st.form('form'):
   user_input = st.text_input('Prompt')
   size = st.selectbox("Size", ["1024x1024", "512x512", "256x256"])
