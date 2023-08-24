@@ -6,6 +6,7 @@ from pandas_datareader import data as pdr
 import yfinance as yf
 import streamlit as st
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 st.header("대우건설 주가예측 🙏🏻")
 
@@ -34,11 +35,19 @@ st.header("대우건설 주가예측 🙏🏻")
 ########################################################################
 ########################################################################
 ########################################################################
-start_date = "2010-03-01"
+# start_date = "2010-03-01"
+yf.pdr_override()
+start_date = datetime(2010,3,1)
 end_date = datetime.today()
 # get_data_yahoo(종목코드, 시작일, 마감일)
 # KIA = pdr.get_data_yahoo("000270.KS", start_date, end_date)
 stock = pdr.get_data_yahoo("047040.KS", start_date, end_date)
+# st.write(stock)
+
+# start_date = datetime.today() - relativedelta(years=10)
+# get_stock_data = yf.Ticker('047040.KS')
+# stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
+# st.write(stock_df)
 
 # accuracy 확인을 위한 데이터
 # stock_trunc = stock[:"2023-07-30"]
