@@ -1,7 +1,7 @@
 ##########################################################################
 ### 공통함수 ###############################################################
 ##########################################################################
-def get_kor_amount_string_no_change(num_amount, ndigits_keep=3):
+def get_kor_amount_string_no_change(num_amount, ndigits_keep):
     """잔돈은 자르고 숫자를 자릿수 한글단위와 함께 리턴한다 """
     return get_kor_amount_string(num_amount, 
                                  -(len(str(num_amount)) - ndigits_keep))

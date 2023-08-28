@@ -60,7 +60,7 @@ if clear_button:
 # generate a response
 def generate_response(prompt):
     st.session_state['messages'].append({"role": "user", "content": prompt})
-
+    print(st.session_state['messages'])
     completion = openai.ChatCompletion.create(
         model=model,
         messages=st.session_state['messages']

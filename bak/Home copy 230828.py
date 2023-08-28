@@ -17,8 +17,13 @@ status_stock = st.empty() # 주가정보 로딩바
 st.write(""" ### 🤖 AI 브리핑 """)
 dt_today = datetime.today().strftime('%Y년 %m월 %d일 %H시%M분')
 with st.expander(dt_today, expanded=True):
+    ai_eco_text = st.empty() # 경제지표 ChatGPT 답변
+    # container for chat history
+    # response_container = st.container()
+    # container for text box
+    container = st.empty()
+    # container = st.container()
     ai_stock_text = st.empty() # 주가정보 ChatGPT 답변
-    # container = st.empty()
 
 dt_range = st.sidebar.radio('기간', ['3개월', '6개월', '1년', '3년', '10년'])
 if dt_range == '1개월':
@@ -35,9 +40,7 @@ elif dt_range == '10년':
     start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(years=10))
 end_date = datetime.today()
 
-##########################################################################
-### 1-1. 주가정보 사이드바 종목 설정 ############################################
-##########################################################################
+### 사이드바 종목 설정 #########################################################
 stocks = [
     {'name': ' 대우건설', 'symbol': '047040.KS'}
     ]
@@ -72,9 +75,23 @@ for stock in multi_stocks:
 
 change_stocks_df = pd.DataFrame() # 주가 변동률
 info_stock_df = pd.DataFrame() # 주가 변동률
+# info_stock_df = pd.DataFrame(
+#     index=['시가총액', 
+#            '시가총액(억)', 
+#            '매수의견', 
+#            '현재가', 
+#            '총현금액',
+#            '총부채액',
+#            '총매출액',
+#            '매출총이익', 
+#            '영업이익률',
+#         #    '순이익률',
+#             '변동률',
+#            '비고']
+# )
 
 ##########################################################################
-### 1-2. 주가정보 불러오기 ###################################################
+### 주가정보 불러오기 ########################################################
 ##########################################################################
 for i, stock in enumerate(stocks):
     l_rate = round(i / len(stocks) * 100)
@@ -97,21 +114,16 @@ for i, stock in enumerate(stocks):
     change2_df.reset_index(drop=False, inplace=True)
     change_stocks_df = pd.concat([change_stocks_df, change2_df])
 
-    # st.table(get_stock_data.quarterly_financials)
-
 # prompt = respense["choices"][0].get("delta", {}).get("content")
     info_stock_df[stock['name']] = [
         get_stock_data.info['marketCap'],
-        convert.get_kor_amount_string_no_change(get_stock_data.info['marketCap'], 3),
+        convert.get_kor_amount_string_no_change(get_stock_data.info['marketCap']),
         get_stock_data.info['recommendationKey'],
         get_stock_data.info['currentPrice'],
-        # convert.get_kor_amount_string_no_change(get_stock_data.info['currentPrice'], 1),
         get_stock_data.info['totalCash'], # 총현금액
-        convert.get_kor_amount_string_no_change(get_stock_data.info['totalCash'], 3),
         get_stock_data.info['totalDebt'], # 총부채액
         get_stock_data.info['totalRevenue'], # 총매출액
-        get_stock_data.info.get('grossProfits', 0), # 매출총이익
-        # convert.get_kor_amount_string_no_change(get_stock_data.info.get('grossProfits', '')),
+        get_stock_data.info.get('grossProfits', ''), # 매출총이익
         get_stock_data.info['operatingMargins'] * 100, # 영업이익률
         round(change_stocks_df[-1:].iloc[0]['rate'], 1), # 변동률
         '']
@@ -123,11 +135,9 @@ info_stock_df.index = [
     '매수의견', 
     '현재가', 
     '총현금액',
-    '총현금액(억)',
     '총부채액',
     '총매출액',
     '매출총이익', 
-    # '매출총이익(억)', 
     '영업이익률',
 #    '순이익률',
     rate_text,
@@ -135,7 +145,7 @@ info_stock_df.index = [
     ]
 
 ##########################################################################
-### 1-3. 주가정보 라인차트 그리기 ##############################################
+### 주가정보 차트그리기 #######################################################
 ##########################################################################
 st.write(f""" ### 🚀 {dt_range} 누적변동률  """)
 
@@ -150,13 +160,13 @@ line_chart = alt.Chart(change_stocks_df).mark_line().encode(
 
 text_data = change_stocks_df.loc[change_stocks_df['Date'].idxmax()]
 text_data.reset_index(drop=True, inplace=True)
-text_sort_stock = text_data.sort_values(by=['rate'], ascending=True)
-text_sort_stock.reset_index(drop=True, inplace=True)
+text_data2 = text_data.sort_values(by=['rate'], ascending=True)
+text_data2.reset_index(drop=True, inplace=True)
 text_data3 = pd.DataFrame(text_data.loc[0]).T
-if len(text_sort_stock.index) > 1:
-    text_data3.loc[1] = text_sort_stock.loc[0]
-if len(text_sort_stock.index) > 2:
-    text_data3.loc[2] = text_sort_stock.loc[round(len(text_data3.index)/2)]
+if len(text_data2.index) > 1:
+    text_data3.loc[1] = text_data2.loc[0]
+if len(text_data2.index) > 2:
+    text_data3.loc[2] = text_data2.loc[round(len(text_data3.index)/2)]
 
 # rate_text = f'{dt_range}변동률'
 labels = alt.Chart(text_data3).mark_text(
@@ -193,9 +203,6 @@ labels2 = alt.Chart(text_data3).mark_text(
 )
 st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 
-##########################################################################
-### 1-4. 시가총액 바차트 그리기 ################################################
-##########################################################################
 st.write(""" ### 🎙️ 시가총액 """)
 # cap_df = info_stock_df.T
 cap_df = info_stock_df.iloc[[0, 1]].T #시가총액, 시가총액(억)
@@ -224,9 +231,7 @@ bar_text = alt.Chart(cap_df).mark_text(
             )
 st.altair_chart(bar_chart + bar_text, use_container_width=True)
 
-##########################################################################
-### 2-1. 경제지표 사이드바 종목 설정 ############################################
-##########################################################################
+### 사이드바 종목 설정 #########################################################
 products = [
     {'name': ' 원/달러', 'symbol': 'USDKRW=X'}
     ]
@@ -260,9 +265,9 @@ multi_products = st.sidebar.multiselect(
     )
 
 ##########################################################################
-### 2-2. 경제지표 블러오기 ####################################################
+### 경제지표 블러오기 #########################################################
 ##########################################################################
-progress_stock.progress(0)
+
 for product in multi_products:
     words = product.split()
     products.append({'name': words[0], 'symbol': words[1]})
@@ -306,7 +311,7 @@ for idx, product in enumerate(products):
     last_df = pd.concat([last_df, last3_df])
 
 ##########################################################################
-### 2-3. 경제지표 라인차트 그리기 ##############################################
+### 경제지표 차트그리기 #######################################################
 ##########################################################################
 status_stock.text("")
 progress_stock.empty()
@@ -325,13 +330,13 @@ line_chart = alt.Chart(change_eco_df).mark_line().encode(
 
 text_data = last_df
 text_data.reset_index(drop=True, inplace=True)
-text_sort_eco = text_data.sort_values(by=['rate'], ascending=False)
-text_sort_eco.reset_index(drop=True, inplace=True)
-text_data3 = pd.DataFrame(text_sort_eco.loc[0]).T
-if len(text_sort_eco.index) > 1:
-    text_data3.loc[1] = text_sort_eco.loc[len(text_sort_eco.index)-1]
-if len(text_sort_eco.index) > 2:
-    text_data3.loc[2] = text_sort_eco.loc[round(len(text_sort_eco.index)/2)]
+text_data2 = text_data.sort_values(by=['rate'], ascending=True)
+text_data2.reset_index(drop=True, inplace=True)
+text_data3 = pd.DataFrame(text_data2.loc[0]).T
+if len(text_data2.index) > 1:
+    text_data3.loc[1] = text_data2.loc[len(text_data2.index)-1]
+if len(text_data2.index) > 2:
+    text_data3.loc[2] = text_data2.loc[round(len(text_data2.index)/2)]
 
 labels = alt.Chart(text_data3).mark_text(
     # point=True,
@@ -372,57 +377,76 @@ st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 openai.api_key = st.secrets["api_key"]
 
 ##########################################################################
-### 3-1. AI 경제지표 브리핑 ##################################################
+### AI 경제지표 브리핑 #######################################################
 ##########################################################################
-chatGPT_msg = [{'role': 'system', 'content': '넌 대우건설 재무 분석 전문가야 경영진들에게 대우건설 주가 흐름과 거기 경제에 대해 브리핑 해줘'}]
+eco_msg = [{'role': 'system', 'content': '넌 재무 분석가야'}]
 
 userq = f'|지표|현재가|{dt_range}변동률|' + '\n'
 userq += '|:-:|-:|-:| \n'
-text_sort_eco.columns = ['지표', '일자', '현재가', f'{dt_range}변동률']
-text_sort_eco.index = text_sort_eco['지표']
-text_sort_eco.drop(['지표'], axis=1, inplace=True)
-
-for index, row in text_sort_eco.iterrows():
-    Close = str(round(row['현재가']))
-    rate = str(round(row[f'{dt_range}변동률'], 2))
-    userq = userq + '|' + index + '|' + Close + "|" + rate + '|' + '\n'
-
+# DataFrame의 각 행을 ChatCompletion messages에 추가
+for index, row in last_df.iterrows():
+    Close = str(round(row['Close']))
+    rate = str(round(row['rate'], 2))
+    userq = userq + '|' + row['symbol'] + '|' + Close + "|" + rate + '|' + '\n'
+userq += '\n 요약은 하지말고 현재 경제상황을 전문적으로 설명하고 과거 유사한 사례가 있으면 알려주고 앞으로의 경제상황 예측해줘 \n'
 user_message = {'role': 'user', 'content': f"{userq}"}
+eco_msg.extend([user_message])
+
+streamText = '🤖 '
+# with st.spinner('1) Waiting for ChatGPT...'):
+# print(eco_msg)
+# get_respense = openai.ChatCompletion.create(
+#     model = "gpt-3.5-turbo",
+#     messages = eco_msg,
+#     max_tokens = 20,
+#     temperature=0,
+#     stream=True,   
+# )
+# for respense in get_respense:
+#     # prompt = respense["choices"][0]["message"]["content"]
+#     prompt = respense["choices"][0].get("delta", {}).get("content")
+#     if prompt is not None:
+#         streamText = streamText + prompt
+#         ai_eco_text.info(f""" {streamText} """)
+#         # print(prompt, end='') # 한줄씩 츨략
+#         # print(prompt, end='') # 한줄씩 츨략
+
+# user_message = {'role': 'user', 'content': f"{userq}"}
+user_message = {'role': 'user', 'content': streamText}
+eco_msg.extend([user_message])
+
+print(user_message)
+
 
 ##########################################################################
-### 3-2 AI 동종사 비교 ######################################################
+### AI 동종사 비교 ##########################################################
 ##########################################################################
 # DataFrame 결과를 ChatCompletion messages에 넣기 위한 변환
 # messages = [{'role': 'system', 'content': '넌 대우건설 재무 분석가야'},
 #             {'role': 'assistant', 'content': '비교 분석해줘'}]
+stock_msg = [{'role': 'system', 'content': '넌 대우건설 재무 분석가야'}]
+
+# st.write(info_stock_df)
 chat_df = info_stock_df.T
-
-# userq = f'|지표|현재가|{dt_range}변동률|' + '\n'
-# userq += '|:-:|-:|-:| \n'
-# text_sort_eco.columns = ['지표', '일자', '현재가', f'{dt_range}변동률']
-# text_sort_eco.index = text_sort_eco['지표']
-chat_df.drop(['시가총액'], axis=1, inplace=True)
-
-# 이어서 작성
-userq += '\n'
-userq += f'|회사명|현재가|매수의견|시가총액|{dt_range}변동률| \n'
+# st.write(chat_df)
+userq = '|회사명|현재가|매수의견|시가총액|변동률| \n'
 userq += '|:--:|-|-|-|-| \n'
 # DataFrame의 각 행을 ChatCompletion messages에 추가
 for index, row in chat_df.iterrows():
     userq += '|' + index + '|' + str(round(row['현재가'])) + '|' + row['매수의견'] + '|' 
     userq += row['시가총액(억)'] + '|' + str(row[rate_text]) + '|' + '\n' 
-userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
-userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
-userq += '과거 유사한 사례를 참고하여 앞으로의 경제상황 예측해줘 \n'
-# userq += '답변은 20글자로 줄여서 답변해줘 \n'
+userq += '\n 50글자로 분석해줘 \n'
 user_message = {'role': 'user', 'content': f"{userq}"}
-chatGPT_msg.extend([user_message])
+stock_msg.extend([user_message])
+# user_message = {'role': 'user', 'content': "50글자로 분석해줘"}
+# messages.extend([user_message])
 
 streamText = '🤖 '
+print(stock_msg)
 get_respense = openai.ChatCompletion.create(
     model = "gpt-3.5-turbo",
-    messages = chatGPT_msg,
-    # max_tokens = 50,
+    messages = stock_msg,
+    max_tokens = 20,
     # temperature=0,
     stream=True,
 )
@@ -430,46 +454,24 @@ get_respense = openai.ChatCompletion.create(
 for respense in get_respense:
     prompt = respense["choices"][0].get("delta", {}).get("content")
     if prompt is not None:
-        # streamText = streamText + prompt
-        streamText += prompt
+        streamText = streamText + prompt
         ai_stock_text.success(f""" {streamText} """)       
         # print(prompt, end='') # 한줄씩 츨력
 
-user_message = {'role': 'assistant', 'content': f"{streamText}"}
-chatGPT_msg.extend([user_message])
-
-# with container:
-#     # with st.form(key='eco_form', clear_on_submit=True):
-#     with st.form(key='eco_form'):        
-#         # user_input = st.text_area(":", key='input', height=100)
-#         user_input = st.text_input('Prompt')
-#         submit_button = st.form_submit_button(label='Send')
-
-#     if submit_button and user_input:
-#         print(submit_button)
-#         print(user_input)
-#         user_message = {'role': 'user', 'content': user_input}
-#         chatGPT_msg.extend([user_message])
-#         # streamText = '🤖 '
-#         streamText = """ 
-# """
-#         get_respense = openai.ChatCompletion.create(
-#             model = "gpt-3.5-turbo",
-#             messages = chatGPT_msg,
-#             # max_tokens = 20,
-#             # temperature=0,
-#             stream=True,
-#         )
-
-#         for respense in get_respense:
-#             prompt = respense["choices"][0].get("delta", {}).get("content")
-#             if prompt is not None:
-#                 # streamText = streamText + prompt
-#                 streamText += prompt
-#                 ai_stock_text.success(f""" {streamText} """)       
-#                 # print(prompt, end='') # 한줄씩 츨력
-
 with st.expander("프롬프트 보기"):
-    st.write(text_sort_eco) # 경제지표 변동률(수익률 높은 순)
-    st.write(chat_df)       # 주가정보 info_stock_df
-    st.write(chatGPT_msg)   # ChatGPT API용
+    st.write(cap_df) # 시가총액, 현재가
+    st.write(text_data) # 변동률
+    st.write(last_df)
+
+    st.write(stock_msg)
+    st.write(eco_msg)
+    
+with container:
+    # with st.form(key='eco_form', clear_on_submit=True):
+    with st.form(key='eco_form'):        
+        user_input = st.text_area("You:", key='input', height=100)
+        submit_button = st.form_submit_button(label='Send')
+
+    if submit_button and user_input:
+        user_message = {'role': 'user', 'content': user_input}
+        eco_msg.extend([user_message])

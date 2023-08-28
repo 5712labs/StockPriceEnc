@@ -9,3 +9,4 @@ streamlit-chat
 statsmodels
 prophet
 pandas_datareader
+newspaper3k
