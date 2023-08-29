@@ -170,7 +170,7 @@ plt.annotate(f'Stock \n {last_Close} \n {last_dt}',
             )
 # st.write(forecast)
 # st.write(forecast[{'ds', 'yhat'}][-1:]) # 마지막 금액
-fore = forecast[{'ds', 'yhat'}][-1:]
+fore = forecast[['ds', 'yhat']][-1:]
 fore_date = fore.iloc[0]['ds']
 fore_dt = fore_date.strftime('%Y-%m-%d')
 fore_Close = round(fore.iloc[0]['yhat'])
@@ -218,29 +218,29 @@ with st.expander("예측데이터 보기"):
 
 
 
-# yf.pdr_override()
-# # 미국 실업률 데이터 불러오기
-# start_date='2000-01-01'
-# end_date ='2022-01-01'
-# unrate = pdr.get_data_fred('UNRATE', start=start_date, end=end_date)
-# # Prophet 모델에 넣을 수 있도록 데이터 변환
-# unrate = unrate.reset_index()
-# unrate = unrate.rename(columns={'DATE': 'ds', 'UNRATE': 'y'})
-# # 모델 생성 및 학습
-# model = Prophet()
-# model.fit (unrate)
-# # 1년 뒤 예측
-# future = model.make_future_dataframe(periods=865)
-# forecast = model.predict (future)
-# # 결과 시각화
-# model.plot(forecast, xlabel='Date', ylabel='Unemployment Rate (%)') 
+# 미국 실업률 데이터 불러오기
+yf.pdr_override()
+start_date = datetime(2010,3,1)
+end_date = datetime.today()
+unrate = pdr.get_data_fred('UNRATE', start=start_date, end=end_date)
+# Prophet 모델에 넣을 수 있도록 데이터 변환
+unrate = unrate.reset_index()
+unrate = unrate.rename(columns={'DATE': 'ds', 'UNRATE': 'y'})
+# 모델 생성 및 학습
+model = Prophet()
+model.fit (unrate)
+# 1년 뒤 예측
+future = model.make_future_dataframe(periods=865)
+forecast = model.predict (future)
+# 결과 시각화
+model.plot(forecast, xlabel='Date', ylabel='Unemployment Rate (%)') 
 
-# fig = plt.figure(figsize=(10, 6))
-# plt.title('U.S. Unemployment Rate Forecast')
-# # 트렌드 변화 시각화
-# fig = model.plot_components(forecast)
-# # plt.show()
-# st.pyplot(fig)
+fig = plt.figure(figsize=(10, 6))
+plt.title('U.S. Unemployment Rate Forecast')
+# 트렌드 변화 시각화
+fig = model.plot_components(forecast)
+# plt.show()
+st.pyplot(fig)
 
 
 
