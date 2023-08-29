@@ -8,21 +8,38 @@ import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import convert
+import datetime as dt
 
-st.header("대우건설 주가예측 🙏🏻")
+option = st.sidebar.selectbox(
+    '동종사를 선택하세요',
+    (
+        "대우건설 047040.KS",
+        "삼성물산 028260.KS",
+        "현대건설 000720.KS",
+        "DL이앤씨 375500.KS",
+        "GS건설 006360.KS",
+        "삼성엔지니어링 028050.KS",
+        "HDC현대산업개발 294870.KS",
+        "금호건설 002990.KS"
+    ))
 
-yf.pdr_override()
+words = option.split()
+user_words = words[0]
+user_stock = words[1]
 
-with st.form('form'):
+with st.sidebar.form('form'):
   user_input = st.text_input('종목코드 / KQ 는 코스닥, KS 는 코스피')
-  st.write('예) 대우건설: 047040.KS | 인선이엔티: 060150.KQ | 애플: AAPL')
+  st.write('예) 대우건설: 047040.KS')
+  st.write('   인선이엔티: 060150.KQ')
+  st.write('   애플: AAPL')
   submit = st.form_submit_button('Submit')
-
-user_stock = '047040.KS'
 
 if submit and user_input:
   user_stock = user_input
-  print(user_stock)
+  user_words
+
+st.header(f"{user_words} 주가예측 🙏🏻")
+st.sidebar.markdown('Tickers Link : [All Stock Symbols](https://stockanalysis.com/stocks/)')
 
 ########################################################################
 ########################################################################
@@ -31,42 +48,42 @@ if submit and user_input:
 start_date = datetime(2010,3,1)
 end_date = datetime.today()
 
-with st.spinner('Waiting for ChatGPT...'):
-  # get_data_yahoo(종목코드, 시작일, 마감일)
-  # stock = pdr.get_data_yahoo("047040.KS", start_date, end_date)
+  # st.button("Reset", type="primary")
+  # if st.button('STOP'):
+  #     st.write('Why hello there')
+  #     st.stop()
+  # else:
+  #     st.write('Goodbye')
+
+with st.spinner('Loading...'):
+  yf.pdr_override()
   stock = pdr.get_data_yahoo(user_stock, start_date, end_date)
-  # KIA = pdr.get_data_yahoo("000270.KS", start_date, end_date)
-  # stock = pdr.get_data_yahoo("051910.KS", start_date, end_date)
-  # stock = pdr.get_data_yahoo("021240.KS", start_date, end_date)
-  # st.write(stock)
-
-  # Calculate RSI
-  rsi_data = convert.calculate_rsi(stock)
-  print(rsi_data)
-
   start_date = datetime.today() - relativedelta(years=10)
-  get_stock_data = yf.Ticker('047040.KS')
+  get_stock_data = yf.Ticker(user_stock)
+  with st.expander(f"{get_stock_data.info['longName']} 상세정보"):
+    st.write(get_stock_data.info)
+  
   stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
-  info_df = pd.DataFrame(
-      index=['시가총액', 
-            '매수의견', 
-            '현재가', 
-            '목표가', 
-          #    '총현금액', 
-          #    '총부채액', 
-          #    '총매출액',
-          #    '매출총이익', 
-          #    '영업이익률',
-          #    '순이익률',
-            '비고']
-  )
+  # info_df = pd.DataFrame(
+  #     index=['시가총액', 
+  #           '매수의견', 
+  #           '현재가', 
+  #           '목표가', 
+  #         #    '총현금액', 
+  #         #    '총부채액', 
+  #         #    '총매출액',
+  #         #    '매출총이익', 
+  #         #    '영업이익률',
+  #         #    '순이익률',
+  #           '비고']
+  # )
 
-info_df['대우건설'] = [
-    get_stock_data.info['marketCap'], 
-    get_stock_data.info['recommendationKey'],
-    get_stock_data.info['currentPrice'],
-    get_stock_data.info['targetHighPrice'],
-    '']
+# info_df['대우건설'] = [
+#     get_stock_data.info['marketCap'], 
+#     get_stock_data.info['recommendationKey'],
+#     get_stock_data.info['currentPrice'],
+#     get_stock_data.info['targetHighPrice'],
+#     '']
 
 # accuracy 확인을 위한 데이터
 # stock_trunc = stock[:"2023-07-30"]
@@ -83,19 +100,14 @@ m.fit(df)
 future = m.make_future_dataframe(periods=90, freq='D')
 forecast = m.predict(future)
 # st.write(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail())
-forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail()
+# forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail()
 
 st.write(""" ### 10년 추세 """)
-# st.write(""" ### 향후 3개월 예측 """)
-# 예측 그래프
-m.plot(forecast)
-# component 별 그래프 (이미지 생략)
-m.plot_components(forecast)
-
-# fig = plt.figure(figsize=(10, 6))
-fig = plt.figure(figsize=(8, 3))
-fig = m.plot(forecast)
-st.pyplot(fig)
+# m.plot(forecast) # 예측 그래프
+# m.plot_components(forecast) # component 별 그래프 (이미지 생략)
+# fig = plt.figure(figsize=(8, 3))
+# fig = m.plot(forecast)
+# st.pyplot(fig)
 
 fig2 = plt.figure(figsize=(8,3))
 plt.plot(stock.index, stock["Close"], label="real")
@@ -103,10 +115,19 @@ plt.plot(forecast["ds"], forecast["yhat"], label="forecast")
 st.pyplot(fig2)
 
 st.write(""" ### 향후 3개월 예측 """)
-st.write(""" ##### ( 주황선 예측 ) """)
+# st.write(stock.index[(stock.index == datetime.today())])
+idx_num = forecast.index[(forecast['ds'] >= datetime.today())]
+# idx_diff = len(forecast) - idx_num[0]
+# st.write(idx_num[0])
+# st.write(len(forecast))
+# st.write(stock)
+# st.write(forecast)
+
 # forecast = forecast[-10:] #마지막 10개?
-forecast = forecast[3200:] #마지막 10개?
-stock = stock[3200:]
+# forecast = forecast[3200:] #마지막 10개?
+forecast = forecast[idx_num[0] - 120:] #마지막 10개?
+# stock = stock[3200:]
+stock = stock[idx_num[0] - 120:]
 
 # 예측 그래프
 m.plot(forecast)
@@ -114,15 +135,64 @@ m.plot(forecast)
 m.plot_components(forecast)
 
 fig2 = plt.figure(figsize=(8,3))
+# fig2, ax = plt.subplots(figsize=(15, 8))
+# ax = fig2.add_subplot(111)
+# ax.annotate('test', xy=(0.9, 0.9),
+#              xycoords='data',
+#              xytext=(0, 0),
+#              textcoords='data',
+#              arrowprops=dict(arrowstyle= '<|-|>',
+#                              color='blue',
+#                              lw=3.5,
+#                              ls='--')
+#            )
+
+# st.write(stock)
+# st.write(stock['Close'][-1:].index[0]) # 마지막 일자
+# st.write(stock['Close'][-1:][0]) # 마지막 금액
+last_date = stock['Close'][-1:].index[0]
+last_dt = last_date.strftime('%Y-%m-%d')
+last_Close = round(stock['Close'][-1:][0])
+
 plt.plot(stock.index, stock["Close"], label="real")
+plt.annotate(f'Stock \n {last_Close} \n {last_dt}', 
+             xy=(last_date, last_Close),
+             xytext=(last_date + relativedelta(weeks=1), last_Close),
+             weight='bold',
+            #  arrowprops=dict(arrowstyle='-', color='gray')
+             arrowprops=dict(arrowstyle="->",
+                            connectionstyle="arc3,rad=0.2"),
+            #  arrowprops=dict(arrowstyle= '<|-|>',
+            #                  color='blue',
+            #                  lw=3.5,
+            #                  ls='--')
+
+            )
+# st.write(forecast)
+# st.write(forecast[{'ds', 'yhat'}][-1:]) # 마지막 금액
+fore = forecast[{'ds', 'yhat'}][-1:]
+fore_date = fore.iloc[0]['ds']
+fore_dt = fore_date.strftime('%Y-%m-%d')
+fore_Close = round(fore.iloc[0]['yhat'])
+# st.write(fore)
+# st.write(fore.iloc[0]['ds']) # 첫 날짜
+# st.write(fore.iloc[0]['yhat']) # 첫 금액
 plt.plot(forecast["ds"], forecast["yhat"], label="forecast")
+plt.annotate(f'AI \n {fore_Close} \n {fore_dt}', 
+             xy=(fore_date, fore_Close),
+             xytext=(fore_date - relativedelta(weeks=16), fore_Close),
+             weight='bold',
+
+            #  arrowprops=dict(arrowstyle='-', color='gray')
+             arrowprops=dict(arrowstyle="->",
+                            connectionstyle="arc3,rad=0.2"),
+            )
 st.pyplot(fig2)
 
 st.write(""" ### 최근 3개월 RSI """)
 # RSI 예측 Plotting
 # Calculate RSI
 rsi_data = convert.calculate_rsi(stock)
-print(rsi_data)
 
 fig3 = plt.figure(figsize=(14, 7))
 plt.subplot(2, 1, 1)
@@ -145,13 +215,6 @@ st.pyplot(fig3)
 with st.expander("예측데이터 보기"):
   st.write(stock.tail())
   st.write(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]][-90:])
-
-
-with st.expander("프롬프트 보기"):
-  st.write(get_stock_data.info)
-  st.write(info_df)
-
-
 
 
 
