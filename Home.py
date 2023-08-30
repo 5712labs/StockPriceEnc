@@ -11,7 +11,7 @@ import convert
 st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 # st.header("세상에서 가장 예쁜 엄마 ❤️♥️😍😘 ")
 
-chatGPT_max_tokens = 500
+chatGPT_max_tokens = 200
 
 progress_stock = st.progress(0) # 주가정보 로딩바
 status_stock = st.empty() # 주가정보 로딩바
@@ -140,8 +140,9 @@ st.write(f""" ### 📈 주요지표 {dt_range} 변동률 """)
 
 base = alt.Chart(change_eco_df).encode(x='Date:T')
 columns = sorted(change_eco_df.symbol.unique())
-selection = alt.selection_single(
-    fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+selection = alt.selection_point(
+    # fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+    fields=['Date'], nearest=True, on='mouseover', empty=False, clear='mouseout'
 )
 # lines = base.mark_line().encode(y='rate:Q', color='symbol:N')
 lines = base.mark_line().encode(
@@ -161,7 +162,7 @@ rule = base.transform_pivot(
     ).mark_rule().encode(
     opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
-).add_selection(selection)
+).add_params(selection)
 
 
 text_data = last_df
@@ -210,16 +211,6 @@ labels2 = alt.Chart(text_data3).mark_text(
 # st.altair_chart(line_chart + labels + labels2, use_container_width=True)
 st.altair_chart(lines + rule + points + labels + labels2, 
                 use_container_width=True)
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -341,8 +332,8 @@ st.write(f""" ### 🚀 동종사 {dt_range} 변동률 """)
 
 base = alt.Chart(change_stocks_df).encode(x='Date:T')
 columns = sorted(change_stocks_df.symbol.unique())
-selection = alt.selection_single(
-    fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+selection = alt.selection_point(
+    fields=['Date'], nearest=True, on='mouseover', empty=False, clear='mouseout'
 )
 # lines = base.mark_line().encode(y='rate:Q', color='symbol:N')
 lines_stock = base.mark_line().encode(
@@ -360,7 +351,7 @@ rule_stock = base.transform_pivot(
     ).mark_rule().encode(
     opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
-).add_selection(selection)
+).add_params(selection)
 
 text_data = change_stocks_df.loc[change_stocks_df['Date'].idxmax()]
 text_data.reset_index(drop=True, inplace=True)
@@ -541,8 +532,8 @@ st.altair_chart(bar_chart + bar_text, use_container_width=True)
 
 # base = alt.Chart(change_eco_df).encode(x='Date:T')
 # columns = sorted(change_eco_df.symbol.unique())
-# selection = alt.selection_single(
-#     fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+# selection = alt.selection_point(
+#     fields=['Date'], nearest=True, on='mouseover', empty=False, clear='mouseout'
 # )
 # # lines = base.mark_line().encode(y='rate:Q', color='symbol:N')
 # lines = base.mark_line().encode(
@@ -562,7 +553,7 @@ st.altair_chart(bar_chart + bar_text, use_container_width=True)
 #     ).mark_rule().encode(
 #     opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
 #     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
-# ).add_selection(selection)
+# ).add_params(selection)
 
 
 # text_data = last_df
@@ -612,6 +603,236 @@ st.altair_chart(bar_chart + bar_text, use_container_width=True)
 # st.altair_chart(lines + rule + points + labels + labels2, 
 #                 use_container_width=True)
 
+
+##########################################################################
+### 3-1. 환율 사이드바 종목 설정 ##############################################
+##########################################################################
+currencies = [
+    {'name': ' USD/KRW', 'symbol': 'KRW=X'}
+    ]
+
+multi_currencies = st.sidebar.multiselect(
+    "통화를 선택하세요",
+    [
+        'USD/AED AED=X', 
+        # 'USD/AUD AUD=X', 미사용
+        'USD/BWP BWP=X',
+        # 'USD/CAD CAD=X', 미사용
+        # 'USD/CHF CHF=X', 미사용
+        'USD/CNY CNY=X',
+        'USD/COP COP=X',
+        'USD/DZD DZD=X',
+        'USD/ETB ETB=X',
+        'USD/HKD HKD=X',
+        'USD/IDR IDR=X',
+        'USD/INR INR=X',
+        'USD/IRR IRR=X',
+        'USD/JOD JOD=X',
+        'USD/JPY JPY=X',
+        'USD/LYD LYD=X',
+        'USD/MAD MAD=X',
+        'USD/MYR MYR=X',
+        'USD/MZN MZN=X',
+        'USD/NGN NGN=X',
+        'USD/OMR OMR=X',
+        'USD/PGK PGK=X',
+        'USD/QAR QAR=X',
+        'USD/SAR SAR=X',
+        'USD/SGD SGD=X',
+        # 'USD/VED VED=X', 미사용
+        'USD/VND VND=X',
+        'USD/ZAR ZAR=X',
+        # 'USD/ZMK ZMK=X', 미사용
+        'USD/ZMW ZMW=X'
+        ],
+    [ #초기 선택
+         'USD/AED AED=X', 
+        # 'USD/AUD AUD=X', 미사용
+        # 'USD/BWP BWP=X',
+        # 'USD/CAD CAD=X', 미사용
+        # 'USD/CHF CHF=X', 미사용
+        'USD/CNY CNY=X',
+        # 'USD/COP COP=X',
+        # 'USD/DZD DZD=X',
+        # 'USD/ETB ETB=X',
+        # 'USD/HKD HKD=X',
+        # 'USD/IDR IDR=X',
+        # 'USD/INR INR=X',
+        'USD/IRR IRR=X',
+        # 'USD/JOD JOD=X',
+        'USD/JPY JPY=X',
+        'USD/LYD LYD=X',
+        # 'USD/MAD MAD=X',
+        'USD/MYR MYR=X',
+        # 'USD/MZN MZN=X',
+        'USD/NGN NGN=X',
+        # 'USD/OMR OMR=X',
+        # 'USD/PGK PGK=X',
+        'USD/QAR QAR=X',
+        'USD/SAR SAR=X',
+        'USD/SGD SGD=X',
+        # 'USD/VED VED=X', 미사용
+        'USD/VND VND=X',
+        # 'USD/ZAR ZAR=X',
+        # 'USD/ZMK ZMK=X', 미사용
+        'USD/ZMW ZMW=X'
+        ]
+    )
+
+##########################################################################
+### 3-2. 환율 블러오기 ######################################################
+##########################################################################
+progress_stock.progress(0)
+
+# tickers_kr = {
+#     "047040.KS" : " 대우건설",
+#     "000720.KS" : "현대건설",
+#     "375500.KS" : "DL이앤씨",
+#     "006360.KS" : "GS건설",
+#     "028260.KS" : "삼성물산"
+# }
+
+# tickers = list(tickers_kr.keys())
+# get_stock_data = yf.download(tickers, start_date, end_date)
+# st.write(get_stock_data)
+# get_stock_data.rename(columns=tickers_kr, inplace=True)
+# st.write(get_stock_data)
+
+for currency in multi_currencies:
+    words = currency.split()
+    currencies.append({'name': words[0], 'symbol': words[1]})
+
+change_cur_df = pd.DataFrame() # 변동률
+last_cur_df = pd.DataFrame() # 변동률
+
+# with st.spinner(text="각종 지표 불러오는중..."):    
+for idx, currency in enumerate(currencies):
+
+    l_rate = round(idx / len(currencies) * 100)
+    progress_stock.progress(l_rate)
+    status_stock.text("3/3 환율 정보를 불러오는 중입니다... %i%%" % l_rate)
+
+    get_currency_data = yf.Ticker(currency['symbol'])
+    currency_df = get_currency_data.history(period='1d', start=start_date, end=end_date)
+    # 일간변동률, 누적합계
+    currency_df['dpc'] = (currency_df.Close/currency_df.Close.shift(1)-1)*100
+    currency_df['cs'] = round(currency_df.dpc.cumsum(), 2)
+    # st.write(get_currency_data.info)
+    # st.write(currency)
+    change2_df = pd.DataFrame(
+        {
+            'symbol': currency['name'],
+            'Close': round(currency_df.Close, 2),
+            'rate': currency_df.cs,
+            }
+    )
+    change2_df.reset_index(drop=False, inplace=True)
+    change_cur_df = pd.concat([change_cur_df, change2_df])
+
+    last2_df = pd.DataFrame(currency_df.iloc[len(currency_df.index)-1]).T
+    last3_df = pd.DataFrame(
+        {
+            'symbol': currency['name'],
+            'Date': last2_df.index,
+            'Close': last2_df.Close, 
+            'rate': last2_df.cs,
+            }
+    )
+    last_cur_df = pd.concat([last_cur_df, last3_df])
+
+##########################################################################
+### 3-3. 환율 라인차트 그리기 #################################################
+##########################################################################
+status_stock.text("")
+progress_stock.empty()
+st.write(f""" ### 📈 주요환율 {dt_range} 변동률 """)
+
+# change_cur_df.dropna(inplace=True) # 결측치 제거
+# lines_cur = alt.Chart(change_cur_df).mark_line().encode(
+#     x = 'Date:T',
+#     y = 'rate:Q',
+#     color= 'symbol:N'
+# )
+# st.altair_chart(lines_cur, use_container_width=True)
+
+base = alt.Chart(change_cur_df).encode(x='Date:T')
+columns = sorted(change_cur_df.symbol.unique())
+selection = alt.selection_point(
+    fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+)
+# lines = base.mark_line().encode(y='rate:Q', color='symbol:N')
+lines = base.mark_line().encode(
+    x = alt.X('Date:T', title=''),
+    y = alt.Y('rate:Q', title=''),
+    color = alt.Color('symbol:N', title='지표', legend=alt.Legend(
+        orient='bottom', 
+        direction='horizontal',
+        titleAnchor='end'))
+)
+points = lines.mark_point().transform_filter(selection)
+
+rule = base.transform_pivot(
+    'symbol', value='Close', groupby=['Date']
+    ).mark_rule().encode(
+    opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
+    tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
+).add_params(selection)
+
+text_data = last_cur_df
+text_data.reset_index(drop=True, inplace=True)
+text_sort_eco = text_data.sort_values(by=['rate'], ascending=False)
+text_sort_eco.reset_index(drop=True, inplace=True)
+text_data3 = pd.DataFrame(text_sort_eco.loc[0]).T
+if len(text_sort_eco.index) > 1:
+    text_data3.loc[1] = text_sort_eco.loc[len(text_sort_eco.index)-1]
+# if len(text_sort_eco.index) > 2:
+#     text_data3.loc[2] = text_sort_eco.loc[round(len(text_sort_eco.index)/2)]
+
+labels = alt.Chart(text_data3).mark_text(
+    # point=True,
+    fontWeight=600,
+    fontSize=15,
+    # color='white',
+    align='left',
+    dx=15,
+    dy=-8
+).encode(
+    x = alt.X('Date:T', title=''),
+    # y = alt.Y('rate:Q', title=rate_text),
+    y = alt.Y('rate:Q', title=''),
+    # y = 'rate:Q',
+    text=alt.Text('rate:Q', format='.1f'),
+    color = alt.Color('symbol:N', title='')
+)
+
+labels2 = alt.Chart(text_data3).mark_text(
+    # point=True,
+    fontWeight=600,
+    fontSize=15,
+    # color='white',
+    align='left',
+    dx=15,
+    dy=10
+).encode(
+    x = alt.X('Date:T', title=''),
+    # y = alt.Y('rate:Q', title=rate_text),
+    y = alt.Y('rate:Q', title=''),
+    text=alt.Text('symbol:N', title=''),
+    color = alt.Color('symbol:N', title='')
+)
+
+st.altair_chart(lines + rule + points + labels + labels2, 
+                use_container_width=True)
+
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
+##########################################################################
 ##########################################################################
 ##########################################################################
 ##########################################################################
@@ -662,6 +883,8 @@ for index, row in chat_df.iterrows():
 userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
 userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
 userq += '과거 유사한 사례를 참고하여 앞으로의 경제상황 예측해줘 \n'
+userq += f'최대 {chatGPT_max_tokens}자로 요약해줘 \n'
+
 # userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
 # userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
 # userq += '과거 유사한 사례를 참고하여 앞으로의 경제상황 예측해줘 \n'
