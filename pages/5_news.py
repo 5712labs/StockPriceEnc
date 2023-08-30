@@ -14,7 +14,8 @@ config.browser_user_agent = user_agent
 
 # link = 'http://cnn.com' # 뉴스 기사 URL
 # link = 'https://www.investing.com/news/most-popular-news'
-link = 'https://www.yna.co.kr/theme/hotnews-history?site=hot_news_btn_more'
+# link = 'https://www.yna.co.kr/theme/hotnews-history?site=hot_news_btn_more'
+link = 'http://news.google.com/news?hl=ko&gl=kr&ie=UTF-8&output=rss&q=삼성전자"'
 # article = Article(link, language = 'ko', config=config) # URL과 언어를 입력
 article = Article(link, config=config) # URL과 언어를 입력
 article.download()

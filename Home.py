@@ -758,7 +758,7 @@ st.write(f""" ### 📈 주요환율 {dt_range} 변동률 """)
 base = alt.Chart(change_cur_df).encode(x='Date:T')
 columns = sorted(change_cur_df.symbol.unique())
 selection = alt.selection_point(
-    fields=['Date'], nearest=True, on='mouseover', empty='none', clear='mouseout'
+    fields=['Date'], nearest=True, on='mouseover', empty=False, clear='mouseout'
 )
 # lines = base.mark_line().encode(y='rate:Q', color='symbol:N')
 lines = base.mark_line().encode(
@@ -780,11 +780,11 @@ rule = base.transform_pivot(
 
 text_data = last_cur_df
 text_data.reset_index(drop=True, inplace=True)
-text_sort_eco = text_data.sort_values(by=['rate'], ascending=False)
-text_sort_eco.reset_index(drop=True, inplace=True)
-text_data3 = pd.DataFrame(text_sort_eco.loc[0]).T
-if len(text_sort_eco.index) > 1:
-    text_data3.loc[1] = text_sort_eco.loc[len(text_sort_eco.index)-1]
+text_sort_cur = text_data.sort_values(by=['rate'], ascending=False)
+text_sort_cur.reset_index(drop=True, inplace=True)
+text_data3 = pd.DataFrame(text_sort_cur.loc[0]).T
+if len(text_sort_cur.index) > 1:
+    text_data3.loc[1] = text_sort_cur.loc[len(text_sort_cur.index)-1]
 # if len(text_sort_eco.index) > 2:
 #     text_data3.loc[2] = text_sort_eco.loc[round(len(text_sort_eco.index)/2)]
 
@@ -883,7 +883,7 @@ for index, row in chat_df.iterrows():
 userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
 userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
 userq += '과거 유사한 사례를 참고하여 앞으로의 경제상황 예측해줘 \n'
-userq += f'최대 {chatGPT_max_tokens}자로 요약해줘 \n'
+# userq += f'최대 {chatGPT_max_tokens}자로 줄여서 알려줘 \n'
 
 # userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
 # userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
@@ -896,7 +896,7 @@ streamText = '🤖 '
 get_respense = openai.ChatCompletion.create(
     model = "gpt-3.5-turbo",
     messages = chatGPT_msg,
-    max_tokens = chatGPT_max_tokens,
+    # max_tokens = chatGPT_max_tokens,
     # temperature=0,
     stream=True,
 )
