@@ -1,45 +1,42 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 import altair as alt
 import openai
+import time  # for measuring time duration of API calls
 import convert
 
 st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
-
-if convert.check_password() == False:
-    st.stop()
+# st.header("세상에서 가장 예쁜 엄마 ❤️♥️😍😘 ")
 
 chatGPT_max_tokens = 1
 
 progress_stock = st.progress(0) # 주가정보 로딩바
 status_stock = st.empty() # 주가정보 로딩바
 
-# st.write(st.session_state)
-
 st.write(""" ### 🤖 AI 브리핑 """)
 dt_today = datetime.today().strftime('%Y년 %m월 %d일 %H시%M분')
-with st.expander(f"{dt_today} by {st.session_state['openai_model']} | {st.session_state['openai_key']} ", expanded=True):
+with st.expander(dt_today, expanded=True):
     ai_stock_text = st.empty() # 주가정보 ChatGPT 답변
+    # container = st.empty()
 
-dt_range = st.sidebar.selectbox("기간",['1주', '1개월', '3개월', '6개월', '1년', '3년', '10년'], index=2)
+dt_range = st.sidebar.radio('기간', ['1주', '1개월', '3개월', '6개월', '1년', '3년', '10년'], index=2)
 if dt_range == '1주':
-    # start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(weeks=1))
-    start_date = datetime.today() - relativedelta(weeks=1)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(weeks=1))
 elif dt_range == '1개월':
-    start_date = datetime.today() - relativedelta(months=1)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=1))
 elif dt_range == '3개월':
-    start_date = datetime.today() - relativedelta(months=3)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=3))
 elif dt_range == '6개월':    
-    start_date = datetime.today() - relativedelta(months=6)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(months=6))
 elif dt_range == '1년':    
-    start_date = datetime.today() - relativedelta(years=1)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(years=1))
 elif dt_range == '3년':    
-    start_date = datetime.today() - relativedelta(years=3)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(years=3))
 elif dt_range == '10년':    
-    start_date = datetime.today() - relativedelta(years=10)
+    start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(years=10))
 end_date = datetime.today()
 
 ##########################################################################
@@ -71,8 +68,8 @@ multi_products = st.sidebar.multiselect(
         "S&P500 ^GSPC",
         "천연가스 LNG",
         "10년물 ^TNX",
-        "DBC DBC"
-        # "BTC-USD BTC-USD",
+        "DBC DBC",
+        "BTC-USD BTC-USD",
         ]
     )
 
@@ -103,38 +100,33 @@ for idx, product in enumerate(products):
     product_df['dpc'] = (product_df.Close/product_df.Close.shift(1)-1)*100
     product_df['cs'] = round(product_df.dpc.cumsum(), 2)
 
-# xlsx_df['결재일'] = xlsx_df['결재일'] + MonthEnd()
+    # product_df['Date3'] = pd.to_datetime(product_df.index).to_period(freq='D').to_timestamp(),
+    # st.write(product_df)
 
     change2_df = pd.DataFrame(
         {
-            # 'Date2': pd.to_datetime(product_df.index).to_period(freq='D').astype("datetime64[ns]"),
-            'Date2': product_df.index,
+            # 'Date2': pd.to_datetime(product_df.index).to_period(freq='D').to_timestamp(),
             'symbol': product['name'],
             'Close': round(product_df.Close, 2),
             'rate': product_df.cs,
             }
     )
-    # change2_df.reset_index(drop=False, inplace=True)
     change2_df.reset_index(drop=True, inplace=True)
-    change2_df.columns = ['Date', 'symbol', 'Close', 'rate']
+    # change2_df.columns = ['Date', 'symbol', 'Close', 'rate']
     change_eco_df = pd.concat([change_eco_df, change2_df])
-
     last2_df = pd.DataFrame(product_df.iloc[len(product_df.index)-1]).T
+
     last3_df = pd.DataFrame(
         {
             'symbol': product['name'],
-            # 'Date': last2_df.index,
             'Date': last2_df.index,
-            # 'date': str(last2_df.index),
             'Close': last2_df.Close, 
             'rate': last2_df.cs,
             }
     )
-    # st.write(last3_df)
     last_df = pd.concat([last_df, last3_df])
 
-# st.write(last_df)
-# st.write(change_eco_df)
+st.write(last_df)
 
 ##########################################################################
 ### 2-3. 경제지표 라인차트 그리기 ##############################################
@@ -171,12 +163,15 @@ lines = base.mark_line().encode(
 )
 points = lines.mark_point().transform_filter(selection)
 
+
+
 rule = base.transform_pivot(
     'symbol', value='Close', groupby=['Date']
     ).mark_rule().encode(
     opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
 ).add_params(selection)
+
 
 text_data = last_df
 text_data.reset_index(drop=True, inplace=True)
@@ -285,12 +280,9 @@ for i, stock in enumerate(stocks):
     # stock_df['cs'] = stock_df.dpc.cumsum()
     stock_df['cs'] = round(stock_df.dpc.cumsum(), 2)
     
-    # rou = round(stock_df.Close, 2)[0]
-    # roun = f"{rou:,}"
     change2_df = pd.DataFrame(
         {
             'symbol': stock['name'],
-            'Close': round(stock_df.Close, 2)[0],
             'rate': stock_df.cs,
             }
     )
@@ -366,7 +358,7 @@ lines_stock = base.mark_line().encode(
 points_stock = lines_stock.mark_point().transform_filter(selection)
 
 rule_stock = base.transform_pivot(
-    'symbol', value='Close', groupby=['Date']
+    'symbol', value='rate', groupby=['Date']
     ).mark_rule().encode(
     opacity=alt.condition(selection, alt.value(0.3), alt.value(0)),
     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
@@ -842,6 +834,7 @@ st.altair_chart(lines + rule + points + labels + labels2,
 ##########################################################################
 ##########################################################################
 ##########################################################################
+openai.api_key = st.secrets["api_key"]
 
 ##########################################################################
 ### 3-1. AI 경제지표 브리핑 ##################################################
@@ -901,9 +894,9 @@ chatGPT_msg.extend([user_message])
 
 streamText = '🤖 '
 get_respense = openai.ChatCompletion.create(
-    model=st.session_state["openai_model"],
+    model = "gpt-3.5-turbo",
     messages = chatGPT_msg,
-    # max_tokens = chatGPT_max_tokens,
+    max_tokens = chatGPT_max_tokens,
     # temperature=0,
     stream=True,
 )

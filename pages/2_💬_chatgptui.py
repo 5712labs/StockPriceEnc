@@ -4,7 +4,9 @@ from streamlit_chat import message
 
 # Setting page title and header
 st.set_page_config(page_title="AVA", page_icon=":robot_face:")
-st.markdown("<h1 style='text-align: center;'>AVA - a totally harmless chatbot 😬</h1>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>디지털개발팀 ChatGPT API_KEY 활용 예제 🤩</h1>", unsafe_allow_html=True)
+st.write(f""" * **API_KEY 활용을 위해 간단한 코딩이 필요합니다.** """)
+st.write(f""" * **개인키 발급 후 사용이 완료되었거나 GPT4를 활용해보고 싶으신 분들은 회신 주세요** """)
 
 # Set org ID and API key
 # openai.organization = "<YOUR_OPENAI_ORG_ID>"
@@ -37,10 +39,6 @@ counter_placeholder.write(f"Total cost of this conversation: ${st.session_state[
 clear_button = st.sidebar.button("Clear Conversation", key="clear")
 
 # Map model names to OpenAI model IDs
-if model_name == "GPT-3.5":
-    model = "gpt-3.5-turbo"
-else:
-    model = "gpt-4"
 
 # reset everything
 if clear_button:
@@ -56,6 +54,10 @@ if clear_button:
     st.session_state['total_tokens'] = []
     counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
 
+if model_name == "GPT-3.5":
+    model = "gpt-3.5-turbo"
+else:
+    model = "gpt-4"
 
 # generate a response
 def generate_response(prompt):
@@ -75,6 +77,24 @@ def generate_response(prompt):
     completion_tokens = completion.usage.completion_tokens
     return response, total_tokens, prompt_tokens, completion_tokens
 
+st.write(f""" #### 샘플 코드 """)
+st.write('''
+```
+openai.api_key = st.secrets["api_key"] --> 팀 공유 API_KEY
+
+# generate a response
+def generate_response(prompt):
+    st.session_state['messages'].append({"role": "user", "content": prompt})
+    completion = openai.ChatCompletion.create(
+        model='gpt-3.5-turbo', #gpt-4
+        messages=st.session_state['messages']
+    )
+    response = completion.choices[0].message.content
+    st.session_state['messages'].append({"role": "assistant", "content": response})
+    return response
+```
+'''
+)
 
 # container for chat history
 response_container = st.container()
