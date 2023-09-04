@@ -12,6 +12,18 @@ st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 if convert.check_password() == False:
     st.stop()
 
+# import socket
+# st.write(socket.gethostname())
+# st.write(socket.gethostbyname(socket.gethostname())) # Internal
+# # st.write(socket.gethostbyname(socket.getfqdn())) # External
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# s.connect(("8.8.8.8", 80))
+# st.write(s.getsockname()[0])
+# s.close()
+
+# import getmac
+# st.write(getmac.get_mac_address())
+
 chatGPT_max_tokens = 1
 
 progress_stock = st.progress(0) # 주가정보 로딩바
@@ -885,10 +897,9 @@ userq += '|:--:|-|-|-|-| \n'
 for index, row in chat_df.iterrows():
     userq += '|' + index + '|' + str(round(row['현재가'])) + '|' + row['매수의견'] + '|' 
     userq += row['시가총액(억)'] + '|' + str(row[rate_text]) + '|' + '\n' 
-userq += '\n 현재 주가를 대우건설 중심으로 간단하게 요약하고 회사들의 평균변동률도 알려줘 \n'
-userq += '제시한 각종 지표를 활용하여 변동성이 큰 지표를 분석해줘 상관관계가 높은 지표들을 알려줘 \n'
-userq += '과거 유사한 사례를 참고하여 앞으로의 경제상황 예측해줘 \n'
-userq += '요약하고 변동성이 큰 지표들의 원인과 경제에 미치는 영향도 알려줘 \n'
+userq += '\n 1. 거시경제 지표 요약하고 변동성이 큰 지표들을 과거 사례와 비교하여 경제에 미치는 영향 알려줘 \n'
+userq += '2. 대우건설 주가와 타회사도 비교해서 알려줘 \n'
+userq += '머릿글로 구분해서 100자 이내로 요약해서 알려줘 \n'
 
 # userq += f'최대 {chatGPT_max_tokens}자로 줄여서 알려줘 \n'
 

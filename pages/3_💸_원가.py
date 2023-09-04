@@ -5,13 +5,27 @@ from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import MonthEnd, MonthBegin
 import altair as alt
 import convert
+import msoffcrypto
+import io
 
 st.title('준공예정도급')
 
 if convert.check_password() == False:
     st.stop()
 
-xlsx_row_df = pd.read_excel('./sources/base.xlsx')
+def get_df_from_password_excel(excelpath, password):
+    df = pd.DataFrame()
+    temp = io.BytesIO()
+    with open(excelpath, 'rb') as f:
+        excel = msoffcrypto.OfficeFile(f)
+        excel.load_key(password)
+        excel.decrypt(temp)
+        df = pd.read_excel(temp)
+        del temp
+    return df
+
+# xlsx_row_df = pd.read_excel('./sources/base.xlsx')
+xlsx_row_df = get_df_from_password_excel('./sources/base.xlsx', st.secrets["password"])
 xlsx_row_df['결재일'] = pd.to_datetime(xlsx_row_df['결재일'])
 xlsx_row_df['공사종료일'] = pd.to_datetime(xlsx_row_df['공사종료일'])
 
@@ -45,14 +59,6 @@ change_eco_df.dropna(inplace=True)
 last_df.drop(last_df[(last_df['변동률'] == 0)].index, inplace=True)
 last_df.dropna(inplace=True)
 last_df.sort_values(by=['변동률'], ascending=False, inplace=True)
-
-with st.expander("프롬프트 보기"):
-    st.write("change_eco_df")
-    st.write(change_eco_df)
-    st.write(f"last_df{last_df.shape}")
-    st.write(last_df)
-    # st.write('text_data')
-    # st.write(text_data)
 
 ##########################################################################
 ### ####################################################
@@ -201,3 +207,13 @@ st.altair_chart(bar_chart, use_container_width=True)
 # )
 # st.altair_chart(lines, 
 #                 use_container_width=True)
+
+
+with st.expander("프롬프트 보기"):
+    st.write(f"change_eco_df{change_eco_df.shape}")
+    st.write(change_eco_df)
+    st.write(f"last_df{last_df.shape}")
+    st.write(last_df)
+    st.write(f"xlsx_row_df{xlsx_row_df.shape}")
+    st.write(xlsx_row_df)
+    

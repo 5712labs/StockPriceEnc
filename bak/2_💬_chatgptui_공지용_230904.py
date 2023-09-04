@@ -5,6 +5,7 @@ from streamlit_chat import message
 # Setting page title and header
 st.set_page_config(page_title="AVA", page_icon=":robot_face:")
 st.markdown("<h2 style='text-align: center;'>디지털개발팀 ChatGPT API_KEY 활용 예제 🤩</h1>", unsafe_allow_html=True)
+st.write(f""" * **🤪 오창원 과장입니다.** """)
 st.write(f""" * **API_KEY 활용을 위해 간단한 코딩이 필요합니다.** """)
 st.write(f""" * **개인키 발급 후 사용이 완료되었거나 GPT4를 활용해보고 싶으신 분들은 회신 주세요** """)
 

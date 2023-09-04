@@ -7,11 +7,9 @@ import openai
 
 def check_password():
     """Returns `True` if the user had the correct password."""
+    # st.write(st.session_state)
+
     def password_entered():
-        st.write(st.session_state)
-        if "password_correct" in st.session_state:
-           if st.session_state["password_correct"]:
-               return True
         """Checks whether a password entered by the user is correct."""
         if st.session_state["password"] == st.secrets["password"]:
             st.session_state["password_correct"] = True
@@ -21,36 +19,25 @@ def check_password():
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
         return False
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
         st.error("😕 Password incorrect")
         return False
     else:
-        # st.session_state["openai_model"] = st.sidebar.selectbox("Choose a model:", ("gpt-3.5-turbo", "gpt-4"))
-        # st.session_state["openai_key"] = st.sidebar.selectbox("Choose a model:", ("personal", "company"))
-        # if st.session_state["openai_key"] == 'company':
-        #     openai.api_key = st.secrets["api_dw"]
-        # else:
-        #     openai.api_key = st.secrets["api_key"]
-
-        openai_options = ["gpt-3.5-turbo personal", "gpt-3.5-turbo company", "gpt-4 company"]
-        st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options)
-        if st.session_state["openai_option"] == 'gpt-3.5-turbo personal':
+        st.session_state["openai_model"] = st.sidebar.selectbox("Choose a model:", ("gpt-3.5-turbo", "gpt-4"))
+        st.session_state["openai_key"] = st.sidebar.selectbox("Choose a model:", ("personal", "company"))
+        if st.session_state["openai_key"] == 'company':
+            openai.api_key = st.secrets["api_dw"]
+        else:
             openai.api_key = st.secrets["api_key"]
-            st.session_state["openai_key"] = 'personal'
-            st.session_state["openai_model"] = 'gpt-3.5-turbo'
-        elif st.session_state["openai_option"] == 'gpt-3.5-turbo company':
-            openai.api_key = st.secrets["api_dw"]
-            st.session_state["openai_key"] = 'company'
-            st.session_state["openai_model"] = 'gpt-3.5-turbo'
-        elif st.session_state["openai_option"] == 'gpt-4 company':
-            openai.api_key = st.secrets["api_dw"]
-            st.session_state["openai_key"] = 'company'
-            st.session_state["openai_model"] = 'gpt-4'
-
+        # Password correct.
         return True
 
 def get_kor_amount_string_no_change(num_amount, ndigits_keep):

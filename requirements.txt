@@ -11,3 +11,5 @@ prophet
 pandas_datareader
 newspaper3k
 konlpy
+getmac
+msoffcrypto-tool

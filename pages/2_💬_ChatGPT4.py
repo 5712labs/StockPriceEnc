@@ -21,7 +21,6 @@ if clear_button:
 #     st.session_state['total_tokens'] = []
 #     counter_placeholder.write(f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}")
 
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
     # st.write("messages not in st.session_state")
