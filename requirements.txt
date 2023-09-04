@@ -13,3 +13,4 @@ newspaper3k
 konlpy
 getmac
 msoffcrypto-tool
+openpyxl

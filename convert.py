@@ -8,7 +8,7 @@ import openai
 def check_password():
     """Returns `True` if the user had the correct password."""
     def password_entered():
-        st.write(st.session_state)
+        # st.write(st.session_state)
         if "password_correct" in st.session_state:
            if st.session_state["password_correct"]:
                return True
