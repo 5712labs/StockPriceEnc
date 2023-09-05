@@ -4,6 +4,9 @@
 # streamlit_app.py
 import streamlit as st
 import openai
+import pandas as pd
+import msoffcrypto
+import io
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -113,3 +116,14 @@ def calculate_rsi(data, window_length=14):
     data['RSI'] = rsi
 
     return data
+
+def get_df_from_password_excel(excelpath, password):
+    df = pd.DataFrame()
+    temp = io.BytesIO()
+    with open(excelpath, 'rb') as f:
+        excel = msoffcrypto.OfficeFile(f)
+        excel.load_key(password)
+        excel.decrypt(temp)
+        df = pd.read_excel(temp)
+        del temp
+    return df

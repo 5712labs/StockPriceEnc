@@ -12,10 +12,24 @@ st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 if convert.check_password() == False:
     st.stop()
 
+# import socket
+# st.write(socket.gethostname())
+# st.write(socket.gethostbyname(socket.gethostname())) # Internal
+# # st.write(socket.gethostbyname(socket.getfqdn())) # External
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# s.connect(("8.8.8.8", 80))
+# st.write(s.getsockname()[0])
+# s.close()
+
+# import getmac
+# st.write(getmac.get_mac_address())
+
 chatGPT_max_tokens = 1
 
 progress_stock = st.progress(0) # 주가정보 로딩바
 status_stock = st.empty() # 주가정보 로딩바
+
+# st.write(st.session_state)
 
 st.write(""" ### 🤖 AI 브리핑 """)
 dt_today = datetime.today().strftime('%Y년 %m월 %d일 %H시%M분')
@@ -24,6 +38,7 @@ with st.expander(f"{dt_today} by {st.session_state['openai_model']} | {st.sessio
 
 dt_range = st.sidebar.selectbox("기간",['1주', '1개월', '3개월', '6개월', '1년', '3년', '10년'], index=2)
 if dt_range == '1주':
+    # start_date = st.sidebar.date_input('Start date', datetime.today() - relativedelta(weeks=1))
     start_date = datetime.today() - relativedelta(weeks=1)
 elif dt_range == '1개월':
     start_date = datetime.today() - relativedelta(months=1)
@@ -43,6 +58,7 @@ end_date = datetime.today()
 ### 2-1. 경제지표 사이드바 종목 설정 ############################################
 ##########################################################################
 products = [
+    # {'name': ' 원/달러', 'symbol': 'USDKRW=X'}
     {'name': '달러인덱스', 'symbol': 'DX-Y.NYB'}
     ]
 
@@ -82,50 +98,55 @@ for product in multi_products:
     words = product.split()
     products.append({'name': words[0], 'symbol': words[1]})
 
-@st.cache_data
-def load_eco_data(products):
-    change_eco_df = pd.DataFrame() # 변동률
-    last_df = pd.DataFrame() # 변동률
-    
-    for idx, product in enumerate(products):
+change_eco_df = pd.DataFrame() # 변동률
+last_df = pd.DataFrame() # 변동률
 
-        # l_rate = round(idx / len(products) * 100)
-        # progress_stock.progress(l_rate)
-        # status_stock.text(f"{status_Text} {l_rate}%")
+# with st.spinner(text="각종 지표 불러오는중..."):    
+for idx, product in enumerate(products):
 
-        get_product_data = yf.Ticker(product['symbol'])
-        product_df = get_product_data.history(period='1d', start=start_date, end=end_date)
+    l_rate = round(idx / len(products) * 100)
+    progress_stock.progress(l_rate)
+    status_stock.text(f"{status_Text} {l_rate}%")
 
-        # 일간변동률, 누적합계
-        product_df['dpc'] = (product_df.Close/product_df.Close.shift(1)-1)*100
-        product_df['cs'] = round(product_df.dpc.cumsum(), 2)
+    get_product_data = yf.Ticker(product['symbol'])
+    product_df = get_product_data.history(period='1d', start=start_date, end=end_date)
 
-        change2_df = pd.DataFrame(
-            {
-                'Date2': product_df.index,
-                'symbol': product['name'],
-                'Close': round(product_df.Close, 2),
-                'rate': product_df.cs,
-                }
-        )
-        # change2_df.reset_index(drop=False, inplace=True)
-        change2_df.reset_index(drop=True, inplace=True)
-        change2_df.columns = ['Date', 'symbol', 'Close', 'rate']
-        change_eco_df = pd.concat([change_eco_df, change2_df])
+    # 일간변동률, 누적합계
+    product_df['dpc'] = (product_df.Close/product_df.Close.shift(1)-1)*100
+    product_df['cs'] = round(product_df.dpc.cumsum(), 2)
 
-        last2_df = pd.DataFrame(product_df.iloc[len(product_df.index)-1]).T
-        last3_df = pd.DataFrame(
-            {
-                'symbol': product['name'],
-                'Date': last2_df.index,
-                'Close': last2_df.Close, 
-                'rate': last2_df.cs,
-                }
-        )
-        last_df = pd.concat([last_df, last3_df])
-    return change_eco_df, last_df
+# xlsx_df['결재일'] = xlsx_df['결재일'] + MonthEnd()
 
-change_eco_df, last_df = load_eco_data(products)
+    change2_df = pd.DataFrame(
+        {
+            # 'Date2': pd.to_datetime(product_df.index).to_period(freq='D').astype("datetime64[ns]"),
+            'Date2': product_df.index,
+            'symbol': product['name'],
+            'Close': round(product_df.Close, 2),
+            'rate': product_df.cs,
+            }
+    )
+    # change2_df.reset_index(drop=False, inplace=True)
+    change2_df.reset_index(drop=True, inplace=True)
+    change2_df.columns = ['Date', 'symbol', 'Close', 'rate']
+    change_eco_df = pd.concat([change_eco_df, change2_df])
+
+    last2_df = pd.DataFrame(product_df.iloc[len(product_df.index)-1]).T
+    last3_df = pd.DataFrame(
+        {
+            'symbol': product['name'],
+            # 'Date': last2_df.index,
+            'Date': last2_df.index,
+            # 'date': str(last2_df.index),
+            'Close': last2_df.Close, 
+            'rate': last2_df.cs,
+            }
+    )
+    # st.write(last3_df)
+    last_df = pd.concat([last_df, last3_df])
+
+# st.write(last_df)
+# st.write(change_eco_df)
 
 ##########################################################################
 ### 2-3. 경제지표 라인차트 그리기 ##############################################
@@ -253,83 +274,78 @@ for stock in multi_stocks:
     words = stock.split()
     stocks.append({'name': words[0], 'symbol': words[1]})
 
+change_stocks_df = pd.DataFrame() # 주가 변동률
+info_stock_df = pd.DataFrame() # 주가 변동률
+
 ##########################################################################
 ### 1-2. 주가정보 불러오기 ###################################################
 ##########################################################################
-
 status_Text = '2/2 주가 정보를 불러오는 중입니다...'
 progress_stock.progress(0)
 status_stock.text(f"{status_Text}")
 
-@st.cache_data
-def load_stock_data(stocks):
-    change_stocks_df = pd.DataFrame() # 주가 변동률
-    info_stock_df = pd.DataFrame() # 주가 변동률
+for i, stock in enumerate(stocks):
+    l_rate = round(i / len(stocks) * 100)
+    progress_stock.progress(l_rate)
+    # status_stock.text("2/2 주가 정보를 불러오는 중입니다... %i%%" % l_rate)
+    status_stock.text(f"{status_Text} {l_rate}%")
 
-    for i, stock in enumerate(stocks):
-        # l_rate = round(i / len(stocks) * 100)
-        # progress_stock.progress(l_rate)
-        # status_stock.text(f"{status_Text} {l_rate}%")
+    get_stock_data = yf.Ticker(stock['symbol'])
+    stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
+    # 일간변동률, 누적합계
+    stock_df['dpc'] = (stock_df.Close/stock_df.Close.shift(1)-1)*100
+    # stock_df['cs'] = stock_df.dpc.cumsum()
+    stock_df['cs'] = round(stock_df.dpc.cumsum(), 2)
+    
+    # rou = round(stock_df.Close, 2)[0]
+    # roun = f"{rou:,}"
+    change2_df = pd.DataFrame(
+        {
+            'symbol': stock['name'],
+            'Close': round(stock_df.Close, 2)[0],
+            'rate': stock_df.cs,
+            }
+    )
 
-        get_stock_data = yf.Ticker(stock['symbol'])
-        stock_df = get_stock_data.history(period='1d', start=start_date, end=end_date)
-        # 일간변동률, 누적합계
-        stock_df['dpc'] = (stock_df.Close/stock_df.Close.shift(1)-1)*100
-        # stock_df['cs'] = stock_df.dpc.cumsum()
-        stock_df['cs'] = round(stock_df.dpc.cumsum(), 2)
-        
-        # rou = round(stock_df.Close, 2)[0]
-        # roun = f"{rou:,}"
-        change2_df = pd.DataFrame(
-            {
-                'symbol': stock['name'],
-                'Close': round(stock_df.Close, 2)[0],
-                'rate': stock_df.cs,
-                }
-        )
+    change2_df.reset_index(drop=False, inplace=True)
+    change_stocks_df = pd.concat([change_stocks_df, change2_df])
 
-        change2_df.reset_index(drop=False, inplace=True)
-        change_stocks_df = pd.concat([change_stocks_df, change2_df])
+    # st.table(get_stock_data.quarterly_financials)
 
-        # st.table(get_stock_data.quarterly_financials)
+# prompt = respense["choices"][0].get("delta", {}).get("content")
+    info_stock_df[stock['name']] = [
+        get_stock_data.info['marketCap'],
+        convert.get_kor_amount_string_no_change(get_stock_data.info['marketCap'], 3),
+        get_stock_data.info['recommendationKey'],
+        get_stock_data.info['currentPrice'],
+        # convert.get_kor_amount_string_no_change(get_stock_data.info['currentPrice'], 1),
+        get_stock_data.info['totalCash'], # 총현금액
+        convert.get_kor_amount_string_no_change(get_stock_data.info['totalCash'], 3),
+        get_stock_data.info['totalDebt'], # 총부채액
+        get_stock_data.info['totalRevenue'], # 총매출액
+        get_stock_data.info.get('grossProfits', 0), # 매출총이익
+        # convert.get_kor_amount_string_no_change(get_stock_data.info.get('grossProfits', '')),
+        get_stock_data.info['operatingMargins'] * 100, # 영업이익률
+        round(change_stocks_df[-1:].iloc[0]['rate'], 1), # 변동률
+        '']
 
-    # prompt = respense["choices"][0].get("delta", {}).get("content")
-        info_stock_df[stock['name']] = [
-            get_stock_data.info['marketCap'],
-            convert.get_kor_amount_string_no_change(get_stock_data.info['marketCap'], 3),
-            get_stock_data.info['recommendationKey'],
-            get_stock_data.info['currentPrice'],
-            # convert.get_kor_amount_string_no_change(get_stock_data.info['currentPrice'], 1),
-            get_stock_data.info['totalCash'], # 총현금액
-            convert.get_kor_amount_string_no_change(get_stock_data.info['totalCash'], 3),
-            get_stock_data.info['totalDebt'], # 총부채액
-            get_stock_data.info['totalRevenue'], # 총매출액
-            get_stock_data.info.get('grossProfits', 0), # 매출총이익
-            # convert.get_kor_amount_string_no_change(get_stock_data.info.get('grossProfits', '')),
-            get_stock_data.info['operatingMargins'] * 100, # 영업이익률
-            round(change_stocks_df[-1:].iloc[0]['rate'], 1), # 변동률
-            '']
-        rate_text = f'{dt_range}변동률'
-        info_stock_df.index = [
-            '시가총액', 
-            '시가총액(억)', 
-            '매수의견', 
-            '현재가', 
-            '총현금액',
-            '총현금액(억)',
-            '총부채액',
-            '총매출액',
-            '매출총이익', 
-            # '매출총이익(억)', 
-            '영업이익률',
-        #    '순이익률',
-            rate_text,
-            '비고'
-            ]
-
-    return change_stocks_df, info_stock_df
-
-change_stocks_df, info_stock_df = load_stock_data(stocks)
+rate_text = f'{dt_range}변동률'
+info_stock_df.index = [
+    '시가총액', 
+    '시가총액(억)', 
+    '매수의견', 
+    '현재가', 
+    '총현금액',
+    '총현금액(억)',
+    '총부채액',
+    '총매출액',
+    '매출총이익', 
+    # '매출총이익(억)', 
+    '영업이익률',
+#    '순이익률',
+    rate_text,
+    '비고'
+    ]
 
 ##########################################################################
 ### 1-3. 주가정보 라인차트 그리기 ##############################################
@@ -704,48 +720,43 @@ for currency in multi_currencies:
     words = currency.split()
     currencies.append({'name': words[0], 'symbol': words[1]})
 
+change_cur_df = pd.DataFrame() # 변동률
+last_cur_df = pd.DataFrame() # 변동률
 
-@st.cache_data
-def load_cur_data(currencies):
-    change_cur_df = pd.DataFrame() # 변동률
-    last_cur_df = pd.DataFrame() # 변동률
+# with st.spinner(text="각종 지표 불러오는중..."):    
+for idx, currency in enumerate(currencies):
 
-    # with st.spinner(text="각종 지표 불러오는중..."):    
-    for idx, currency in enumerate(currencies):
+    l_rate = round(idx / len(currencies) * 100)
+    progress_stock.progress(l_rate)
+    status_stock.text(f"{status_Text} {l_rate}%")
 
-        # l_rate = round(idx / len(currencies) * 100)
-        # progress_stock.progress(l_rate)
-        # status_stock.text(f"{status_Text} {l_rate}%")
+    get_currency_data = yf.Ticker(currency['symbol'])
+    currency_df = get_currency_data.history(period='1d', start=start_date, end=end_date)
+    # 일간변동률, 누적합계
+    currency_df['dpc'] = (currency_df.Close/currency_df.Close.shift(1)-1)*100
+    currency_df['cs'] = round(currency_df.dpc.cumsum(), 2)
+    # st.write(get_currency_data.info)
+    # st.write(currency)
+    change2_df = pd.DataFrame(
+        {
+            'symbol': currency['name'],
+            'Close': round(currency_df.Close, 2),
+            'rate': currency_df.cs,
+            }
+    )
+    change2_df.reset_index(drop=False, inplace=True)
+    change_cur_df = pd.concat([change_cur_df, change2_df])
 
-        get_currency_data = yf.Ticker(currency['symbol'])
-        currency_df = get_currency_data.history(period='1d', start=start_date, end=end_date)
-        # 일간변동률, 누적합계
-        currency_df['dpc'] = (currency_df.Close/currency_df.Close.shift(1)-1)*100
-        currency_df['cs'] = round(currency_df.dpc.cumsum(), 2)
-        # st.write(get_currency_data.info)
-        # st.write(currency)
-        change2_df = pd.DataFrame(
-            {
-                'symbol': currency['name'],
-                'Close': round(currency_df.Close, 2),
-                'rate': currency_df.cs,
-                }
-        )
-        change2_df.reset_index(drop=False, inplace=True)
-        change_cur_df = pd.concat([change_cur_df, change2_df])
-
-        last2_df = pd.DataFrame(currency_df.iloc[len(currency_df.index)-1]).T
-        last3_df = pd.DataFrame(
-            {
-                'symbol': currency['name'],
-                'Date': last2_df.index,
-                'Close': last2_df.Close, 
-                'rate': last2_df.cs,
-                }
-        )
-        last_cur_df = pd.concat([last_cur_df, last3_df])
-
-change_cur_df, last_cur_df = load_eco_data(currencies)
+    last2_df = pd.DataFrame(currency_df.iloc[len(currency_df.index)-1]).T
+    last3_df = pd.DataFrame(
+        {
+            'symbol': currency['name'],
+            'Date': last2_df.index,
+            'Close': last2_df.Close, 
+            'rate': last2_df.cs,
+            }
+    )
+    last_cur_df = pd.concat([last_cur_df, last3_df])
 
 ##########################################################################
 ### 3-3. 환율 라인차트 그리기 #################################################
@@ -883,7 +894,6 @@ userq += '건설회사 주가정보 \n'
 userq += f'|회사명|현재가|매수의견|시가총액|{dt_range}변동률| \n'
 userq += '|:--:|-|-|-|-| \n'
 # DataFrame의 각 행을 ChatCompletion messages에 추가
-rate_text = f'{dt_range}변동률'
 for index, row in chat_df.iterrows():
     userq += '|' + index + '|' + str(round(row['현재가'])) + '|' + row['매수의견'] + '|' 
     userq += row['시가총액(억)'] + '|' + str(row[rate_text]) + '|' + '\n' 

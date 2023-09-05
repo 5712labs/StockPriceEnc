@@ -14,3 +14,8 @@ konlpy
 getmac
 msoffcrypto-tool
 openpyxl
+pygwalker
+langchain
+tiktoken
+chromadb
+pykrx
