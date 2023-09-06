@@ -12,6 +12,10 @@ st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
 if convert.check_password() == False:
     st.stop()
 
+clear_button = st.sidebar.button("Clear Cache", key="clear")
+if clear_button:
+    st.cache_data.clear()
+
 chatGPT_max_tokens = 1
 
 progress_stock = st.progress(0) # 주가정보 로딩바

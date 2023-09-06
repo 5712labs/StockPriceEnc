@@ -19,3 +19,4 @@ langchain
 tiktoken
 chromadb
 pykrx
+finance-datareader
