@@ -15,7 +15,9 @@ from pandas_datareader import data as pdr
 import convert
 
 # Page setup
-st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="wide")
+# st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="wide")
+st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="centered")
+
 # st.title("AI Stock Search Engine")
 st.title("AI 주가 예측")
 
