@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 import convert
 
-st.title("ChatGPT4")
+st.title("ChatGPT")
 
 if convert.check_password() == False:
     st.stop()
@@ -23,8 +23,6 @@ if clear_button:
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # st.write("messages not in st.session_state")
-    # st.write(st.session_state.messages)
 
 for message in st.session_state.messages:
     if message["role"] != "system": #시스템은 가리기

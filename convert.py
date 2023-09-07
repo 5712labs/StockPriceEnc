@@ -40,9 +40,10 @@ def check_password():
         #     openai.api_key = st.secrets["api_key"]
 
         openai_options = ["gpt-3.5-turbo personal", "gpt-3.5-turbo company", "gpt-4 company"]
-        st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options)
+        st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options, index=1)
         if st.session_state["openai_option"] == 'gpt-3.5-turbo personal':
-            openai.api_key = st.secrets["api_key"]
+            # openai.api_key = st.secrets["api_key"]
+            openai.api_key = st.secrets["api_dw_oh"]
             st.session_state["openai_key"] = 'personal'
             st.session_state["openai_model"] = 'gpt-3.5-turbo'
         elif st.session_state["openai_option"] == 'gpt-3.5-turbo company':
@@ -101,6 +102,7 @@ def get_kor_amount_string(num_amount, ndigits_round=0, str_suffix='원'):
     return str_result + str_suffix # 접미사를 붙인다
 
 def calculate_rsi(data, window_length=14):
+    data = data.copy()
     delta = data['Close'].diff()
     delta = delta[1:] 
 
