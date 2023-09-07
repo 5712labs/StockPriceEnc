@@ -1,8 +1,10 @@
 import streamlit as st
 import openai
 import pandas as pd
+import convert
 
-openai.api_key = st.secrets["api_key"]
+if convert.check_password() == False:
+    st.stop()
 
 with st.form('form'):
   user_input = st.text_input('Prompt')

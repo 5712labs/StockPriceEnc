@@ -242,7 +242,7 @@ with expander_stocks:
                 cols = st.columns(N_cards_per_row, gap="small")
             # draw the card
             with cols[n_row%N_cards_per_row]:
-                search = st.button(f"**{row['종목명']}**", type="secondary", key=f"{row['코드']}")
+                search = st.button(f"**{row['종목명']}**", type="primary", key=f"{row['코드']}")
                 st.markdown(f"****{row['업종']}****")
                 st.caption(f"{row['주요제품']}")
                 if search:

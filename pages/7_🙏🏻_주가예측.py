@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+# import numpy as np
 import matplotlib.pyplot as plt
 from prophet import Prophet
 from pandas_datareader import data as pdr
@@ -8,7 +8,7 @@ import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import convert
-import datetime as dt
+# import datetime as dt
 
 option = st.sidebar.selectbox(
     '동종사를 선택하세요',
