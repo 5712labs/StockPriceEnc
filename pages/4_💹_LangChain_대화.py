@@ -32,10 +32,6 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 pinecone.init(api_key=f"{st.secrets['api_pine']}", environment='gcp-starter')
 index_name = 'dwlangchain'
 
-# curl -X DELETE \
-#     -H 'Api-Key: d5bca891-49d7-4da2-a72e-0317a4b97e8c' \
-#     'https://dwlangchain-5353d15.svc.gcp-starter.pinecone.io/vectors/delete?ids='
-
 def all_ids_data():
     indexquery = pinecone.Index(index_name)
     namespace = ''
