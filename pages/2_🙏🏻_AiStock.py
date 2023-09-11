@@ -14,9 +14,17 @@ import yfinance as yf
 from pandas_datareader import data as pdr
 import convert
 
-# Page setup
-# st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="wide")
 st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="centered")
+
+# if "dt_range" in st.session_state:
+#     print(dt_range)
+#     print(st.session_state["dt_range"])
+#     if dt_range != st.session_state["dt_range"]:
+#         st.session_state["dt_range"] = dt_range
+#         st.cache_data.clear()
+# else:
+#     st.session_state["dt_range"] = dt_range
+
 
 # st.title("AI Stock Search Engine")
 st.title("AI 주가 예측")

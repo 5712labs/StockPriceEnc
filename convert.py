@@ -5,10 +5,22 @@
 import streamlit as st
 import openai
 import pandas as pd
+import pinecone
 import msoffcrypto
 import io
 
 def check_password():
+    #----------------------Hide Streamlit footer----------------------------
+    hide_st_style = """
+        <style>
+        #MainMenu {visibility: show;}
+        header {visibility: show;}
+        footer {visibility: hidden;}
+        </style>
+    """
+    st.markdown(hide_st_style, unsafe_allow_html=True)
+    #--------------------------------------------------------------------
+
     """Returns `True` if the user had the correct password."""
     def password_entered():
         # st.write(st.session_state)
@@ -38,7 +50,6 @@ def check_password():
         #     openai.api_key = st.secrets["api_dw"]
         # else:
         #     openai.api_key = st.secrets["api_key"]
-
         openai_options = ["gpt-3.5-turbo personal", "gpt-3.5-turbo company", "gpt-4 company"]
         st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options, index=1)
         if st.session_state["openai_option"] == 'gpt-3.5-turbo personal':

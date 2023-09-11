@@ -27,6 +27,12 @@ with st.expander(f"{dt_today} by {st.session_state['openai_model']} | {st.sessio
     ai_stock_text = st.empty() # 주가정보 ChatGPT 답변
 
 dt_range = st.sidebar.selectbox("기간",['1주', '1개월', '3개월', '6개월', '1년', '3년', '10년'], index=2)
+if "dt_range" in st.session_state:
+    if dt_range != st.session_state["dt_range"]:
+        st.session_state["dt_range"] = dt_range
+        st.cache_data.clear()
+else:
+    st.session_state["dt_range"] = dt_range
 if dt_range == '1주':
     start_date = datetime.today() - relativedelta(weeks=1)
 elif dt_range == '1개월':
@@ -372,7 +378,8 @@ rule_stock = base.transform_pivot(
     tooltip=[alt.Tooltip(c, type='quantitative') for c in columns]
 ).add_params(selection)
 
-text_data = change_stocks_df.loc[change_stocks_df['Date'].idxmax()]
+# text_data = change_stocks_df.loc[change_stocks_df['Date'].idxmax()]
+text_data = change_stocks_df.groupby('symbol', as_index=False).nth(-1)
 text_data.reset_index(drop=True, inplace=True)
 text_sort_stock = text_data.sort_values(by=['rate'], ascending=True)
 text_sort_stock.reset_index(drop=True, inplace=True)
@@ -854,8 +861,9 @@ st.altair_chart(lines + rule + points + labels + labels2,
 chatGPT_msg = [{'role': 'system', 'content': '넌 대우건설 재무 분석 전문가야 경영진들에게 대우건설 주가 흐름과 거기 경제에 대해 브리핑 해줘'}]
 
 userq = '거시경제 지표 \n'
-userq += f'|지표|현재가|{dt_range}변동률|' + '\n'
-userq += '|:-:|-:|-:| \n'
+# userq += f'|지표|현재가|{dt_range}변동률|' + '\n'
+# userq += '|:-:|-:|-:| \n'
+userq += f'지표 현재가 {dt_range}변동률''\n'
 text_sort_eco.columns = ['지표', '일자', '현재가', f'{dt_range}변동률']
 text_sort_eco.index = text_sort_eco['지표']
 text_sort_eco.drop(['지표'], axis=1, inplace=True)
@@ -863,7 +871,8 @@ text_sort_eco.drop(['지표'], axis=1, inplace=True)
 for index, row in text_sort_eco.iterrows():
     Close = str(round(row['현재가']))
     rate = str(round(row[f'{dt_range}변동률'], 2))
-    userq = userq + '|' + index + '|' + Close + "|" + rate + '|' + '\n'
+    # userq = userq + '|' + index + '|' + Close + "|" + rate + '|' + '\n'
+    userq = userq + ' ' + index + ' ' + Close + " " + rate + ' ' + '\n'
 
 user_message = {'role': 'user', 'content': f"{userq}"}
 
@@ -884,16 +893,20 @@ chat_df.drop(['시가총액'], axis=1, inplace=True)
 # 이어서 작성
 userq += '\n'
 userq += '건설회사 주가정보 \n'
-userq += f'|회사명|현재가|매수의견|시가총액|{dt_range}변동률| \n'
-userq += '|:--:|-|-|-|-| \n'
+# userq += f'|회사명|현재가|매수의견|시가총액|{dt_range}변동률| \n'
+# userq += '|:--:|-|-|-|-| \n'
+userq += f'회사명 현재가 매수의견 시가총액 {dt_range}변동률\n'
 # DataFrame의 각 행을 ChatCompletion messages에 추가
 rate_text = f'{dt_range}변동률'
 for index, row in chat_df.iterrows():
-    userq += '|' + index + '|' + str(round(row['현재가'])) + '|' + row['매수의견'] + '|' 
-    userq += row['시가총액(억)'] + '|' + str(row[rate_text]) + '|' + '\n' 
-userq += '\n 1. 거시경제 지표 요약하고 변동성이 큰 지표들을 과거 사례와 비교하여 경제에 미치는 영향 알려줘 \n'
-userq += '2. 대우건설 주가와 타회사도 비교해서 알려줘 \n'
-userq += '머릿글로 구분해서 100자 이내로 요약해서 알려줘 \n'
+    # userq += '|' + index + '|' + str(round(row['현재가'])) + '|' + row['매수의견'] + '|' 
+    # userq += row['시가총액(억)'] + '|' + str(row[rate_text]) + '|' + '\n' 
+    userq += index + ' ' + str(round(row['현재가'])) + ' ' + row['매수의견'] + ' ' 
+    userq += row['시가총액(억)'] + ' ' + str(row[rate_text]) + ' ' + '\n' 
+
+userq += '\n 1. 거시경제 지표 요약하고 변동성이 큰 지표들을 과거 사례와 비교하여 경제에 미치는 영향 알려줘\n'
+userq += '2. 대우건설 주가와 타회사도 비교해서 알려줘\n'
+userq += '3. 머릿글로 구분해서 100자 이내로 요약해서 알려줘.\n'
 
 # userq += f'최대 {chatGPT_max_tokens}자로 줄여서 알려줘 \n'
 
@@ -904,7 +917,7 @@ userq += '머릿글로 구분해서 100자 이내로 요약해서 알려줘 \n'
 user_message = {'role': 'user', 'content': f"{userq}"}
 chatGPT_msg.extend([user_message])
 
-streamText = '🤖 '
+streamText = ''
 get_respense = openai.ChatCompletion.create(
     model=st.session_state["openai_model"],
     messages = chatGPT_msg,

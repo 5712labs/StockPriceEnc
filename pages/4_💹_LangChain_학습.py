@@ -1,31 +1,23 @@
 # pip install langchain=0.0.142
 # pip install openai=0.27.4
 # pip install tiktoken=0.3.3
-# pip install chromadb=0.3.21
-# https://anpigon.tistory.com/389
-# https://rading.kr/programming/machine-learn/6563/
-# https://www.youtube.com/watch?v=ftXLn9DE7YY
+# pip install pinecone-client
+# https://blog.futuresmart.ai/building-a-document-based-question-answering-system-with-langchain-pinecone-and-llms-like-gpt-4-and-chatgpt#heading-7-embedding-documents-with-openai
 import streamlit as st
 import os
-# import platform
-# import openai
-# import chromadb
-# import langchain
 import tiktoken
-from langchain.vectorstores import Chroma 
+import pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings 
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
-# from langchain.chat_models import ChatOpenAI
-# from langchain.chains import ChatVectorDBChain 
-# from langchain.document_loaders import GutenbergLoader
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import DirectoryLoader
+from langchain.vectorstores import Pinecone
 
-st.stop()
+import convert
+if convert.check_password() == False:
+    st.stop()
 
-# loader = GutenbergLoader("https://www.gutenberg.org/cache/epub/69972/pg69972.txt")
 loader = DirectoryLoader('./sources', glob='*.txt', loader_cls=TextLoader)
-loader = DirectoryLoader('./sources', glob='dtms_01.txt', loader_cls=TextLoader)
 documents = loader.load()
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:  
@@ -35,44 +27,63 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
     return num_tokens
 
 # 텍스트를 청크(chunk) 단위로 분할하기
-chunk_size = 300
+chunk_size = 1000
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=20)
 texts = text_splitter.split_documents(documents)
 st.write(f'{len(documents)}개의 문서를 {chunk_size} 청크 단위로 {len(texts)}개의 문서로 분할 하였습니다.')
 st.write(texts)
-# persist_directory="/content/drive/My Drive/Colab Notebooks/chroma/romeo"
 
-st.stop()
-
-persist_directory="db"
 os.environ['OPENAI_API_KEY'] = st.secrets["api_key"]
-embedding = OpenAIEmbeddings()  
-vectordb = Chroma.from_documents(
-    documents=texts,
-    embedding=embedding, 
-    persist_directory=persist_directory)  
-vectordb.persist()
-vectordb = None
+pinecone.init(api_key=f"{st.secrets['api_pine']}", environment='gcp-starter')
+st.write('pinecone.list_indexes()')
+st.write(pinecone.list_indexes())
+
+st.info(f""" 
+## 업로드를 완료하였습니다.
+#### Pinecone
+[https://app.pinecone.io/](https://app.pinecone.io/).
+""")
+
+upsert_button = st.button("Upsert Conversation", key="upsert", type='primary')
+if upsert_button:
+    # index = pinecone.Index("dwlangchain")
+    index_name = 'dwlangchain'
+    embedding = OpenAIEmbeddings()
+    index = Pinecone.from_documents(texts, embedding, index_name=index_name)
+    st.info(f""" 
+    ### 업로드를 완료하였습니다.
+    #### Pinecone
+    [https://app.pinecone.io/](https://app.pinecone.io/).
+    """)
+
+# st.write(pinecone.list_indexes())
+# st.write(index)
+
+# Upsert sample data (5 8-dimensional vectors)
+# index.upsert([
+#     ("A", [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]),
+#     ("E", [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+# ])
+
+# index_name = pinecone.Index("dwlangchain")
 
 
+# import openai
 
-# 불러오기
-vectordb = Chroma(
-    embedding_function=embedding, 
-    persist_directory=persist_directory)  
-retriever = vectordb.as_retriever()
-# retriever = vectordb.as_retriever(search_kwargs={"k": 3})
-docs = retriever.get_relevant_documents("퇴사자 수 알려줘")
+# # get api key from platform.openai.com
+# openai.api_key = os.getenv('OPENAI_API_KEY') or 'OPENAI_API_KEY'
 
-for doc in docs:
-    st.write(doc.metadata["source"])
+# embed_model = "text-embedding-ada-002"
+# query = (
+#     "Which training method should I use for sentence transformers when " +
+#     "I only have pairs of related sentences?"
+# )
+# res = openai.Embedding.create(
+#     input=[query],
+#     engine=embed_model
+# )
 
-# model = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
-# chain = ChatVectorDBChain.from_llm(model, vectordb, return_source_documents=True)
-
-# query = "산업은행의 중도 퇴사자 수는?"
-# result = chain({"question": query, "chat_history": []})
-# st.write(result)
-
-
-
+# # retrieve from Pinecone
+# xq = res['data'][0]['embedding']
+# # get relevant contexts (including the questions)
+# res = index.query(xq, top_k=2, include_metadata=True)

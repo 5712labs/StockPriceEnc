@@ -7,7 +7,7 @@ st.title("ChatGPT")
 if convert.check_password() == False:
     st.stop()
  
-clear_button = st.sidebar.button("Clear Conversation", key="clear")
+clear_button = st.sidebar.button("Clear Conversation", type="primary", key="clear")
 if clear_button:
 #     st.session_state['generated'] = []
 #     st.session_state['past'] = []

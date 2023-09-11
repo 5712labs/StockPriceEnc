@@ -16,7 +16,7 @@ xlsx_row_df = convert.get_df_from_password_excel('./sources/base.xlsx', st.secre
 xlsx_row_df['결재일'] = pd.to_datetime(xlsx_row_df['결재일'])
 xlsx_row_df['공사종료일'] = pd.to_datetime(xlsx_row_df['공사종료일'])
 
-xlsx_df = xlsx_row_df[['결재일', '현장코드', '현장명', '       준공예정원가율', '공사종료일', '           준공예정도급액', '          준공예정원가']]
+xlsx_df = xlsx_row_df[['결재일', '현장코드', '현장명', '       준공예정원가율', '공사종료일', '           준공예정도급액', '          준공예정원가']].copy()
 xlsx_df.columns = ['결재일', '현장코드', '현장명', '준공예정원가율', '공사종료일', '준공예정도급액', '준공예정원가']
 
 xlsx_df.drop(xlsx_df[(xlsx_df['공사종료일'] <= datetime.today())].index, inplace=True)
@@ -103,7 +103,7 @@ lines = alt.Chart(change_eco_df).mark_line().encode(
 text_data = last_df
 text_data.reset_index(drop=True, inplace=True)
 text_data3 = pd.DataFrame(text_data.loc[0].T)
-text_data3 = text_data[:1]
+text_data3 = text_data[:1].copy()
 if len(text_data.index) > 1:
     text_data3.loc[1] = text_data.loc[len(text_data.index)-1]
 if len(text_data.index) > 2:
