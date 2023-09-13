@@ -21,3 +21,4 @@ chromadb
 pykrx
 finance-datareader
 pinecone-client
+faiss-cpu

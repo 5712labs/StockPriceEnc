@@ -7,10 +7,14 @@ import altair as alt
 import openai
 import convert
 
+st.set_page_config(page_title="AI DW", page_icon="🐍", layout='centered')
 st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
+
 
 if convert.check_password() == False:
     st.stop()
+
+st.balloons()
 
 clear_button = st.sidebar.button("Clear Cache", key="clear")
 if clear_button:

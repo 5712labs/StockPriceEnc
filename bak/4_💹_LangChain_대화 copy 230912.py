@@ -120,12 +120,33 @@ def similarity_search_data(query):
 
 if "lang_messages" not in st.session_state:
     st.session_state.lang_messages = []
-    primer = f"""You are Q&A bot. A highly intelligent system that answers
-    user questions based on the information provided by the user above
-    each question. If the information can not be found in the information
-    provided by the user you truthfully say "I don't know".
+
+    primer = f""" You are Q&A bot. A highly intelligent system that answers 
+    user questions based on the information provided by the user above each question. 
+    If the information can not be found in the information provided by the user you truthfully say "I don't know".
+    you only answer in Korean
+    (summaries)
     """
-    st.session_state.lang_messages.append({"role": "system", "content": primer})
+    system_template=""" To answer the question at the end, use the following context. 
+    If you don't know the answer, just say you don't know and don't try to make up an answer.
+    I want you to act as my Burger King menu recommender. It tells you your budget and suggests what to buy. 
+    You should only reply to items you recommend. Don't write a description.
+
+    Below is an example.
+    "My budget is 10,000 won, and it is the best menu combination within the budget."
+    you only answer in Korean
+    (summaries)
+    """
+    
+    # 1. Prompt의 범위를 너무 넓게 잡지 않기
+    # 2. Prompt의 재현율이 낮으면 act, example로 원하는 행태의 결과를 재현할 수 있도록 Prompt 추가
+    # 3. 사용하는 chain에 대한 이해 (help() 나 langchain 공식문서)
+    # 4. 잘 만든 Prompt에 추가적인 기능을 넣고 싶다면 FakeAgent
+    # 5. Chroma는 생각보다 강력한 기능이 있습니다.
+    # 6. 잘 만들어진 다양한 Prompt 보기
+    # https://github.com/f/awesome-chatgpt-prompts
+
+    st.session_state.lang_messages.append({"role": "system", "content": primer, "from": "sys"})
 
 for message in st.session_state.lang_messages:
     if message["role"] != "system": #시스템은 가리기
@@ -133,13 +154,14 @@ for message in st.session_state.lang_messages:
             st.markdown(message["content"])
 
 if prompt := st.chat_input("What is up?"):
-    st.session_state.lang_messages.append({"role": "user", "content": prompt})
+
+    st.session_state.lang_messages.append({"role": "user", "content": prompt, "from": "input"})
     # similarity_data, similar_datas = similarity_search_data(prompt) # 질문 채우기
     # 유사도 {similar_datas[0][1]}
     similarity_data, similar_datas = query_search_data(prompt)
     score = similar_datas['score'][0] * 100
     score = f' `유사도 {round(score, 2)}%`'
-    st.session_state.lang_messages.append({"role": "user", "content": similarity_data})
+    st.session_state.lang_messages.append({"role": "user", "content": similarity_data, "from": "db"})
     with st.chat_message("user"):
         st.markdown(prompt)
 
@@ -159,6 +181,16 @@ if prompt := st.chat_input("What is up?"):
         full_response += f'{score}'
         message_placeholder.markdown(full_response)
         st.write(similar_datas)
+        st.session_state.lang_messages.pop() # DB에서 가져온 user 메시지는 삭제하기
+        st.session_state.lang_messages.append({"role": "assistant", "content": full_response, "from": "chatGPT"})
+        
+        # aaa = {key: value for key, value in a.items() if value != 2}  ## 값이 2인것 빼고(1,3,4) a변수에 딕셔너리를 생성
+
+
+# st.session_state.lang_messages.append({"role": "user", "content": similarity_data, "from": "db"})
+
+
+
     # st.session_state.lang_messages.append({"role": "assistant", "content": full_response})
 
     # st.write(similar_docs[0][1])
@@ -170,10 +202,12 @@ if prompt := st.chat_input("What is up?"):
         # st.write(similar_data[0].metadata['source'])
         # st.write(f'유사도 {similar_data[1]}')
     # st.write(similar_datas[0].metadata['source'])
+    # st.write(st.session_state)
+    # st.session_state.lang_messages.pop(1)
 
-    st.session_state.lang_messages.append({"role": "assistant", "content": full_response})
+    # st.session_state.lang_messages.append({"role": "assistant", "content": full_response, "from": "chatGPT"})
 
 with st.expander("프롬프트 보기"):
     st.write(st.session_state)
-    all_ids_df = all_ids_data()
-    st.write(all_ids_df)
+    # all_ids_df = all_ids_data()
+    # st.write(all_ids_df)

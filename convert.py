@@ -5,9 +5,9 @@
 import streamlit as st
 import openai
 import pandas as pd
-import pinecone
 import msoffcrypto
 import io
+import tiktoken
 
 def check_password():
     #----------------------Hide Streamlit footer----------------------------
@@ -51,7 +51,7 @@ def check_password():
         # else:
         #     openai.api_key = st.secrets["api_key"]
         openai_options = ["gpt-3.5-turbo personal", "gpt-3.5-turbo company", "gpt-4 company"]
-        st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options, index=1)
+        st.session_state["openai_option"] = st.sidebar.selectbox("Choose a model:", openai_options, index=0)
         if st.session_state["openai_option"] == 'gpt-3.5-turbo personal':
             # openai.api_key = st.secrets["api_key"]
             openai.api_key = st.secrets["api_dw_oh"]
@@ -140,3 +140,10 @@ def get_df_from_password_excel(excelpath, password):
         df = pd.read_excel(temp)
         del temp
     return df
+
+def num_tokens_from_string(string: str, encoding_name: str) -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
