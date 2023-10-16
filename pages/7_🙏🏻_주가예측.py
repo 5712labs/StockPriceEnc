@@ -7,7 +7,7 @@ import yfinance as yf
 import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import convert
+from components import convert
 # import datetime as dt
 
 option = st.sidebar.selectbox(

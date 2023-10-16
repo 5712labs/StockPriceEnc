@@ -12,14 +12,19 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import DirectoryLoader
 from langchain.vectorstores import Pinecone
+import tiktoken
 import re
-import convert
+from components import convert
 import pandas as pd
 import numpy as np
 import time
+import requests
+# import pprint
+import json
+
 
 title = 'LLM Learning'
-st.set_page_config(page_title="title", page_icon="🐍", layout="wide")
+st.set_page_config(page_title=title, page_icon="🐍", layout="wide")
 st.title(title)
 
 if convert.check_password() == False:
@@ -27,30 +32,141 @@ if convert.check_password() == False:
 
 os.environ['OPENAI_API_KEY'] = st.secrets["api_key"]
 
-tab1, tab2, tab3, tab4 , tab5 = st.tabs(
-    ["학습(txt)_Pinecone", 
-    "전체목록_Pinecone",
-    "🗃 학습(txt)_Chroma",
-    "전체목록_Chroma",
-    "학습(csv)_FAISS"]
+# tab1, tab2, tab3, tab4 , tab5 = st.tabs(
+#     ["학습(txt)_Pinecone", 
+#     "전체목록_Pinecone",
+#     "🗃 학습(txt)_Chroma",
+#     "전체목록_Chroma",
+#     "학습(csv)_FAISS"]
+#     )
+
+tab3, tab4, tab1, tab2, tab5 = st.tabs(
+    [
+        "🗃 학습(txt)_Chroma",
+        "전체목록_Chroma",
+        "학습(txt)_Pinecone", 
+        "전체목록_Pinecone",
+        "학습(csv)_FAISS"
+        ]
     )
 
+# llm_learn_type = st.radio(label = 'select llm Learning', options = ['Pinecone', 'Chroma', 'FAISS'], index=0)
+# st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+
+
+#########################################################################
+### 학습(txt)_Chroma #####################################################
+#########################################################################
+with tab3:
+    # print(f'start tab3 {tab3}')
+    st.write(""" ### 🧐 전체 목록 보기 """)
+    # persist_directory="db"
+    # embedding = OpenAIEmbeddings()
+    
+    readAll_button = st.button("Read All Data From Chroma Local DB", key="readAllChroma", type='secondary')
+    if readAll_button:
+        persist_directory="db"
+        embedding = OpenAIEmbeddings()
+        chromadb = Chroma(
+        embedding_function=embedding,
+        persist_directory=persist_directory)
+        ids_df = pd.DataFrame(chromadb.get())
+        st.dataframe(
+            data=ids_df,
+            # height=1000,
+            width=1200,
+            hide_index=False,
+        )
+        chromadb.persist()
+        chromadb = None
+
+    st.write("""  """)
+    st.write(""" ### 🎃 txt 파일 학습하기 """)
+    # file_glob = 'DTSM-IR-203_008.txt'
+    file_glob = 'DTSM-PU*'
+
+    # txt_chroma_button = st.button(f"Read {file_glob}", key="txtChroma", type='secondary')
+    # if txt_chroma_button:
+    loader = DirectoryLoader('./sources', glob=file_glob, loader_cls=TextLoader)
+    documents_chroma = loader.load()
+
+    def num_tokens_from_string(string: str, encoding_name: str) -> int:  
+        """Returns the number of tokens in a text string."""  
+        encoding = tiktoken.get_encoding(encoding_name)  
+        num_tokens = len(encoding.encode(string))  
+        return num_tokens
+    # st.write(f'{num_tokens_from_string(documents[0].page_content, encoding_name="cl100k_base")} 토근이 예상됩니다')
+
+    # 텍스트를 청크(chunk) 단위로 분할하기
+    chunk_size = 1000
+    text_chroma_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size, 
+        chunk_overlap=20,
+        add_start_index = True,
+        )
+    texts_chroma = text_chroma_splitter.split_documents(documents_chroma)
+    st.info(f""" 
+            {len(documents_chroma)}개의 문서에 포함된 {len(documents_chroma[0].page_content)}개의 단어를 {chunk_size} 청크 단위로 {len(texts_chroma)}개의 문서로 분할 하였습니다.
+
+            
+            """)
+    # {num_tokens_from_string(documents[0].page_content, encoding_name="cl100k_base")} 토근이 예상됩니다.
+
+    # 업로드 텍스트 Dataframe 형식으로 확인하기
+    texts_chroma_df = pd.DataFrame()
+    for text_chroma in texts_chroma :
+        text_chroma_df = pd.DataFrame({'page_content': [text_chroma.page_content], 'metadata': [text_chroma.metadata]})
+        texts_chroma_df = pd.concat([texts_chroma_df, text_chroma_df])
+    texts_chroma_df.reset_index(drop=True, inplace=True)
+    st.dataframe(
+        data=texts_chroma_df,
+        # height=1000,
+        width=1200,
+        hide_index=False,
+    )
+
+    upsert_button = st.button("Upsert to Chroma Local DB", key="txtUpsertChroma", type='primary')
+    if upsert_button :
+        # persist_directory="/content/drive/My Drive/Colab Notebooks/chroma/romeo"
+        persist_directory="db"
+        # os.environ['OPENAI_API_KEY'] = st.secrets["api_key"]
+        embedding = OpenAIEmbeddings()
+        vectordb = Chroma.from_documents(
+            documents=texts_chroma,
+            embedding=embedding, 
+            persist_directory=persist_directory)  
+        vectordb.persist()
+        vectordb = None
+        st.info(f""" 
+        ### 업로드를 완료하였습니다.
+        #### Chroma
+        [https://docs.trychroma.com/getting-started/](https://docs.trychroma.com/getting-started/)
+        """)
+
+#########################################################################
+### 학습(txt)_Pinecone ###################################################
+#########################################################################
 with tab1:
+    # print(f'start tab1 {tab1}')
     st.header("학습(txt)_Pinecone")
     pinecone.init(api_key=f"{st.secrets['api_pine']}", environment='gcp-starter')
     index_name = 'dwlangchain'
     # st.write('pinecone.list_indexes()')
     # st.write(pinecone.list_indexes())
     # loader = DirectoryLoader('./sources', glob='*.txt', loader_cls=TextLoader)
-    # loader = DirectoryLoader('./sources', glob='DTSM-IR-203_011.txt', loader_cls=TextLoader)
-    loader = DirectoryLoader('./sources', glob='plant.txt', loader_cls=TextLoader)
-    documents = loader.load()
 
+    st.write("""  """)
+    st.write(""" ### 🎃 txt 파일 학습하기 """)
+    # file_glob = 'DTSM-IR-203_009.txt'
+    # txt_pinecone_button = st.button(f"Read {file_glob}", key="txtPinecone", type='secondary')
+    # if txt_pinecone_button:
+    loader_pinecone = DirectoryLoader('./sources', glob='DTSM-IR-203_009.txt', loader_cls=TextLoader)
+    documents_pinecone = loader_pinecone.load()
     # text 정제
     output = []
     # https://study-easy-coding.tistory.com/67
-    for page in documents:
-        text = page.page_content
+    for page_pinecone in documents_pinecone:
+        text = page_pinecone.page_content
         text = re.sub(r'(\w+)-\n((\w+))', r'\1\2', text) # 안녕-\n하세요 -> 안녕하세요
         text = re.sub(r'(?<!\n\s)\n(?!\s\n)', ' ' , text.strip()) # "인\n공\n\n지능팩토리 -> 인공지능팩토리
         text = re.sub(r'\n\s*\n', '\n\n' , text) # "\n버\n\n거\n\n킹\n => 버\n거\n킹
@@ -62,9 +178,24 @@ with tab1:
     # 텍스트를 청크(chunk) 단위로 분할하기
     chunk_size = 1000
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=20)
-    texts = text_splitter.split_documents(documents)
-    st.write(f'{len(documents)}개의 문서를 {chunk_size} 청크 단위로 {len(texts)}개의 문서로 분할 하였습니다.')
-    st.write(texts)
+    texts = text_splitter.split_documents(documents_pinecone)
+
+    st.info(f""" 
+            {len(documents_pinecone)}개의 문서에 포함된 {len(documents_pinecone[0].page_content)}개의 단어를 {chunk_size} 청크 단위로 {len(texts)}개의 문서로 분할 하였습니다.
+
+            
+            """)
+    texts_df = pd.DataFrame()
+    for text in texts :
+        text_df = pd.DataFrame({'page_content': [text.page_content], 'metadata': [text.metadata]})
+        texts_df = pd.concat([texts_df, text_df])
+    texts_df.reset_index(drop=True, inplace=True)
+    st.dataframe(
+        data=texts_df,
+        # height=1000,
+        width=1200,
+        hide_index=False,
+    )
 
     upsert_button = st.button("Upsert to Pinecone DB", key="upsertPinecone", type='primary')
     if upsert_button:
@@ -78,8 +209,11 @@ with tab1:
         [https://app.pinecone.io/](https://app.pinecone.io/).
         """)
 
+#########################################################################
+### 전체목록_Pinecone #####################################################
+#########################################################################
 with tab2:
-
+    # print(f'start tab2 {tab2}')
     pinecone.init(api_key=f"{st.secrets['api_pine']}", environment='gcp-starter')
     index_name = 'dwlangchain'
 
@@ -143,42 +277,18 @@ with tab2:
             st.info(f""" 전체 데이터를 제거하였습니다. """)
             time.sleep(2)
 
-with tab3:
-    # st.header(tab2.title)
-    # loader = GutenbergLoader("https://www.gutenberg.org/cache/epub/69972/pg69972.txt")
-    # loader = DirectoryLoader('./sources', glob='*.txt', loader_cls=TextLoader)
-    # loader = DirectoryLoader('./sources', glob='DTSM-IR-203_011.txt', loader_cls=TextLoader)
-    loader = DirectoryLoader('./sources', glob='plant.txt', loader_cls=TextLoader)
-    documents = loader.load()
-
-    # 텍스트를 청크(chunk) 단위로 분할하기
-    chunk_size = 1000
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=20)
-    texts = text_splitter.split_documents(documents)
-    st.write(f'{len(documents)}개의 문서를 {chunk_size} 청크 단위로 {len(texts)}개의 문서로 분할 하였습니다.')
-    st.write(texts)
-
-    upsert_button = st.button("Upsert to Chroma Local DB", key="upsertChroma", type='primary')
-    if upsert_button:
-        # persist_directory="/content/drive/My Drive/Colab Notebooks/chroma/romeo"
-        persist_directory="db"
-        # os.environ['OPENAI_API_KEY'] = st.secrets["api_key"]
-        embedding = OpenAIEmbeddings()
-        vectordb = Chroma.from_documents(
-            documents=texts,
-            embedding=embedding, 
-            persist_directory=persist_directory)  
-        vectordb.persist()
-        vectordb = None
-        st.info(f""" 
-        ### 업로드를 완료하였습니다.
-        #### Chroma
-        [https://docs.trychroma.com/getting-started/](https://docs.trychroma.com/getting-started/)
-        """)
-
-
-
+#########################################################################
+### 전체목록_Chroma #######################################################
+#########################################################################
 with tab4:
+    # cli = chromadb.Client()
+    # client = chromadb.PersistentClient(path='http://scal.daewooenc.com:8501/flydw/chroma/')
+    # client = chromadb.HttpClient(host="http://scal.daewooenc.com:8501/chroma/", port=8501)
+    # client = chromadb.HttpClient(host="http:/wooenc.com:8501/chroma/", port=8501)
+    # st.write(client)
+    # collection2 = client.list_collections()
+    # st.write(collection2)
+
     # 불러오기
     persist_directory="db"
     embedding = OpenAIEmbeddings()
@@ -186,9 +296,34 @@ with tab4:
         embedding_function=embedding, 
         persist_directory=persist_directory)  
     
-    st.write(vectordb.get())
-    st.write(vectordb.get().keys())
-    st.write(len(vectordb.get()["ids"]))
+    ids_df = pd.DataFrame(vectordb.get())
+    st.dataframe(
+        data=ids_df,
+        height=2000,
+        width=2000,
+        hide_index=False,
+        column_config={
+            # "documents": st.column_config.LinkColumn(
+            #     # "Trending apps",
+            #     # help="The top trending Streamlit apps",
+            #     # validate="^https://[a-z]+\.streamlit\.app$",
+            #     max_chars=150,
+            # ),
+            "documents": st.column_config.TextColumn(
+                # "본문 내용", 이름 변경
+                width=900,
+                # help="Streamlit **widget** commands 🎈",
+                # default="st.",
+                # max_chars=500,
+                # validate="^st\.[a-z_]+$",
+            ),
+            "widgets": st.column_config.Column(
+                width='large'
+            )
+        }
+
+    )
+
     # Using embedded DuckDB with persistence: data will be stored in: ./chroma_db
     # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
     # 7580
@@ -232,8 +367,11 @@ with tab4:
 # # get relevant contexts (including the questions)
 # res = index.query(xq, top_k=2, include_metadata=True)
 
-
+#########################################################################
+### 학습(csv)_FAISS ######################################################
+#########################################################################
 with tab5:
+    st.stop()
     from langchain.document_loaders.csv_loader import CSVLoader
     from langchain.vectorstores import FAISS
     from langchain.prompts import PromptTemplate
@@ -299,4 +437,3 @@ with tab5:
         result = generate_response(message)
 
         st.info(result)
-

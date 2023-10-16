@@ -12,7 +12,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import yfinance as yf
 from pandas_datareader import data as pdr
-import convert
+from components import convert
 
 st.set_page_config(page_title="AI Stock Search Engine", page_icon="🐍", layout="centered")
 

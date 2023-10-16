@@ -1,6 +1,6 @@
 import streamlit as st
 import openai
-import convert
+from components import convert
 
 st.title("ChatGPT")
 

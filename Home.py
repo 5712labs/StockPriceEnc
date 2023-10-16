@@ -5,16 +5,15 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import altair as alt
 import openai
-import convert
+from components import convert
 
-__import__('pysqlite3')
-import sys
+# __import__('pysqlite3')
+# import sys
 
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 st.set_page_config(page_title="AI DW", page_icon="🐍", layout='centered')
-st.header("일하기 좋은 회사 1위 대우건설 VS 동종사 👋 ")
-
+st.header(f"일하기 좋은 회사 1위 대우건설 VS 동종사 👋  {__name__}")
 
 if convert.check_password() == False:
     st.stop()

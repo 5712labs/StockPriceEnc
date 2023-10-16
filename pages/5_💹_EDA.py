@@ -2,7 +2,7 @@ import streamlit as st
 import pygwalker as pyg
 import pandas as pd
 import streamlit.components.v1 as components
-import convert
+from components import convert
 
 st.header("EDA 👋 ")
 
