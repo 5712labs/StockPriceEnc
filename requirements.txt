@@ -25,6 +25,5 @@ faiss-cpu
 pysqlite3-binary
 pytube
 moviepy
-json
 feedparser
 newsapi-python
