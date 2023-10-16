@@ -8,19 +8,21 @@ import pandas as pd
 
 title = 'ChatGPT With Function'
 # title = ''
-st.set_page_config(page_title=title, page_icon="💬", layout='centered')
+st.set_page_config(page_title=title, page_icon="💬", layout='wide')
+# st.set_page_config(page_title=title, page_icon="💬", layout='centered')
 st.title(title)
 
 # with st.expander("😍 무엇을 할 수 있나요?"):
 info_help = '무엇을 할 수 있나요?\n\n'
 info_help += '(1) 함수 호출\n\n'
-info_help += '* 최신 뉴스\n\n'
+info_help += '* 최신 뉴스 5개 보여줘\n\n'
+info_help += '* 건설 뉴스 10개 보여줘\n\n'
 info_help += '* 최근 3개월 경제지표 브리핑 해줘\n\n'
-info_help += '* 최근 3개월 동종사 주가 비교 해줘\n\n'
-info_help += '* 최근 3개월 주요 환율 비교 해줘\n\n'
-info_help += '* 서울 날씨 어때\n\n'
+info_help += '* (준비 중)최근 3개월 동종사 주가 비교 해줘\n\n'
+info_help += '* (준비 중)최근 3개월 주요 환율 비교 해줘\n\n'
+info_help += '* (준비 중)서울 날씨 어때\n\n'
 
-info_help += '(2) 내부문서 조회\n\n'
+info_help += '(2) 내부문서 조회 (왼쪽 사내문서 연동 체크 시)\n\n'
 info_help += '* 채용 규모 알고 싶어\n\n'
 info_help += '* 9월 14일 이슈사항 정리해줘\n\n'
 info_help += '* How to set design pressure\n\n'
@@ -143,7 +145,7 @@ if prompt := st.chat_input("What is up?"):
             }
             fuction_to_call = available_functions[full_funcname]
             function_args = json.loads(full_funcargu)
-            st.write(f'{full_funcname} / {function_args}')
+            # st.write(f'{full_funcname} / {function_args}')
             # st.stop()
             if full_funcname == 'get_current_weather':
                 function_response = fuction_to_call(
@@ -240,7 +242,8 @@ if prompt := st.chat_input("What is up?"):
                 func_messages.append({"role": "user", "content": userq})
                 # st.session_state.messages.append({"role": "assistant", "content": function_response})
             elif full_funcname == 'get_news_newsapi':
-                with st.spinner(f'{full_funcname} / {function_args}'):
+                # with st.spinner(f'{full_funcname} / {function_args}'):
+                with st.spinner(''):
                     function_response = fuction_to_call(
                         search=function_args.get("search"),
                         numOfRows=function_args.get("numOfRows")
@@ -262,28 +265,29 @@ if prompt := st.chat_input("What is up?"):
                             else:
                                 urlToImage = f'<a href = "{article["url"]}" style="text-decoration:none"><img src="https://newsapi.org/images/flags/kr.svg" width="100%"><br>{article["title"]}</a>'
                                 st.write(urlToImage, unsafe_allow_html=True)
+                    st.subheader('국가별 주요뉴스입니다.')
+                # f'{full_funcname} / {function_args}'
+            # elif full_funcname == 'get_news_google':
+            #     with st.spinner(f'{full_funcname} / {function_args}'):
+            #         function_response = fuction_to_call(
+            #             country=function_args.get("country"),
+            #             numOfRows=function_args.get("numOfRows")
+            #         )
 
-            elif full_funcname == 'get_news_google':
-                with st.spinner(f'{full_funcname} / {function_args}'):
-                    function_response = fuction_to_call(
-                        country=function_args.get("country"),
-                        numOfRows=function_args.get("numOfRows")
-                    )
-
-                f'{full_funcname} / {function_args}'
-                for entry in function_response.entries[:100]:
-                    st.link_button(f"{entry.title}", f"{entry.link}")
-                    print(entry.title)
-                    # st.write(f'{entry.published} {entry.title}')
-                    # 
-                    # "제목:", entry.title
-                    # "일자:", 
-                    # "링크:", entry.link
-                # st.markdown(function_response)
+            #     f'{full_funcname} / {function_args}'
+            #     for entry in function_response.entries[:100]:
+            #         st.link_button(f"{entry.title}", f"{entry.link}")
+            #         print(entry.title)
+            #         # st.write(f'{entry.published} {entry.title}')
+            #         # 
+            #         # "제목:", entry.title
+            #         # "일자:", 
+            #         # "링크:", entry.link
+            #     # st.markdown(function_response)
                 
-                # func_messages.append({"role": "function", "name": full_funcname, "content": function_response})
-                # full_response = f'###### 🤖 AI 경제지표 요약 브리핑입니다. (최근 {dt_range}일)\n\n'
-                # message_placeholder.markdown(full_response)
+            #     # func_messages.append({"role": "function", "name": full_funcname, "content": function_response})
+            #     # full_response = f'###### 🤖 AI 경제지표 요약 브리핑입니다. (최근 {dt_range}일)\n\n'
+            #     # message_placeholder.markdown(full_response)
             elif full_funcname == 'get_company_info':
                 function_response = fuction_to_call(
                     company=function_args.get("company")
@@ -291,29 +295,28 @@ if prompt := st.chat_input("What is up?"):
                 func_messages.append({"role": "function", "name": full_funcname, "content": function_response})
 
             # print(func_messages)
-            st.stop()
-            for response in openai.ChatCompletion.create(
-                # model=st.session_state["openai_model"],
-                model="gpt-3.5-turbo-0613",
-                messages=func_messages,
-                stream=True,
-            ):
-                full_response += response.choices[0].delta.get("content", "")
-                message_placeholder.markdown(full_response + "▌")
+#             for response in openai.ChatCompletion.create(
+#                 # model=st.session_state["openai_model"],
+#                 model="gpt-3.5-turbo-0613",
+#                 messages=func_messages,
+#                 stream=True,
+#             ):
+#                 full_response += response.choices[0].delta.get("content", "")
+#                 message_placeholder.markdown(full_response + "▌")
 
-            full_response += f"""
-\n\n
-```
-* 함수: {full_funcname}
-* 변수: {full_funcargu}
-* 응답: {func_response}
-```
-\n\n
-"""
+#             full_response += f"""
+# \n\n
+# ```
+# * 함수: {full_funcname}
+# * 변수: {full_funcargu}
+# * 응답: {func_response}
+# ```
+# \n\n
+# """
 
-            message_placeholder.markdown(full_response)
+#             message_placeholder.markdown(full_response)
 
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+#             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 with st.expander("프롬프트 보기"):
     st.write(st.session_state.messages)
